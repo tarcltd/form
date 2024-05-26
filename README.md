@@ -1,6 +1,6 @@
 # Form
 
-A form generation library for Vue 3.
+A form generation library.
 
 ## Installation
 
