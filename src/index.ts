@@ -1,6 +1,6 @@
 import { type ZodObject, z } from "zod";
 
-type AjVExtendedSchemaFieldType =
+type SchemaFieldType =
   | "header"
   | "subheader"
   | "hr"
@@ -19,10 +19,10 @@ type AjVExtendedSchemaFieldType =
   | "tuple"
   | "null";
 
-type AjvExtendedSchemaField =
+type SchemaField =
   /* biome-ignore lint/suspicious/noExplicitAny: */
   | Record<string, any>
-  | AjvExtendedSchemaObject
+  | SchemaObject
   | {
       /**
        * The name of the field. This is used as the name by default.
@@ -31,15 +31,15 @@ type AjvExtendedSchemaField =
       /**
        * The type of the field. Default is `string`.
        */
-      type?: AjVExtendedSchemaFieldType;
+      type?: SchemaFieldType;
       /**
        * The format of the tuple or array.
        */
       data?:
-        | AjVExtendedSchemaFieldType
-        | AjVExtendedSchemaFieldType[]
-        | AjvExtendedSchemaObject
-        | AjvExtendedSchemaObject[];
+        | SchemaFieldType
+        | SchemaFieldType[]
+        | SchemaObject
+        | SchemaObject[];
       /**
        * Whether the field is nullable.
        */
@@ -93,7 +93,7 @@ type AjvExtendedSchemaField =
     };
 
 /* biome-ignore lint/suspicious/noExplicitAny: */
-type AjvExtendedSchemaObject = Record<string, any> & {
+type SchemaObject = Record<string, any> & {
   /**
    * The type of the field.
    */
@@ -101,14 +101,14 @@ type AjvExtendedSchemaObject = Record<string, any> & {
   /**
    * The properties of the object.
    */
-  properties?: Record<string, AjvExtendedSchemaField>;
+  properties?: Record<string, SchemaField>;
   /**
    * The required fields of the schema.
    */
   required: string[];
 };
 
-export type AjvExtendedSchema = {
+type Schema = {
   /**
    * A form must be an object.
    */
@@ -116,14 +116,14 @@ export type AjvExtendedSchema = {
   /**
    * The properties of the schema.
    */
-  properties: Record<string, AjvExtendedSchemaField>;
+  properties: Record<string, SchemaField>;
   /**
    * The required fields of the schema.
    */
   required: string[];
 };
 
-function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
+function generateSchema(schema: Schema | SchemaObject) {
   /* biome-ignore lint/suspicious/noExplicitAny: */
   const shape: Record<string, any> = {};
 
@@ -140,13 +140,13 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
 
       if (schema.properties[key].type === "object") {
         shape[key] = generateSchema(
-          schema.properties[key] as AjvExtendedSchemaObject
+          schema.properties[key] as SchemaObject
         );
       } else if (schema.properties[key].type === "array") {
         if (typeof schema.properties[key].data === "object") {
           shape[key] = z.array(
             generateSchema(
-              schema.properties[key].data as AjvExtendedSchemaObject
+              schema.properties[key].data as SchemaObject
             ),
             {
               required_error: `${schema.properties[key].name} is required.`,
@@ -364,8 +364,8 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
 /**
  * The required return for a form.
  */
-export type FormReturnType = {
-  input: AjvExtendedSchema;
+type FormReturnType = {
+  input: Schema;
   /* biome-ignore lint/suspicious/noExplicitAny: */
   state: Record<string, any>;
   /* biome-ignore lint/suspicious/noExplicitAny: */
@@ -374,22 +374,22 @@ export type FormReturnType = {
 };
 
 /**
- * From an extended AJV schema, generate a reactive form object with validation.
+ * Generate a form object with Zod validation from a schema definition.
  *
- * @param schema - An extended AJV schema.
+ * @param schema - A schema definition.
  * @param state - The form state.
- * @param defaults - The default values for the form.
+ * @param options - Options for the form.
+ *   - `defaults`: The default values for the form.
+ *   - `impl`: The implementation object for the form.
  * @returns An object with the following properties:
- * - `input`: The extended Ajv schema input.
+ * - `input`: The form schema definition.
  * - `state`: The form state.
- * - `schema`: The Zod schema.
- * - `status`: The form validation status.
- * - `isValid`: Whether the form is currently valid.
+ * - `schema`: The parsed `ZodObject` schema.
  * - `reset`: Reset the form to its default values.
  */
 /* biome-ignore lint/suspicious/noExplicitAny: */
 export function form<T = Record<string, any>>(
-  schema: AjvExtendedSchema,
+  schema: Schema,
   /* biome-ignore lint/suspicious/noExplicitAny: */
   state: any,
   options: Partial<{
