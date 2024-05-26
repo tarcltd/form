@@ -3,16 +3,21 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "lint": "npx @biomejs/biome lint src __tests__",
+    "test": "vitest --coverage",
+    "test:ci": "vitest run --coverage",
     "publish": "jsr publish"
   },
   "keywords": [],
   "author": "TARC Ltd. () <support@tarc.ltd>",
   "license": "MIT",
   "dependencies": {
-    "vue": "^3.4.27",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "jsr": "^0.12.4"
+    "@biomejs/biome": "1.7.3",
+    "@vitest/coverage-v8": "^1.6.0",
+    "jsr": "^0.12.4",
+    "vitest": "^1.6.0"
   }
 }

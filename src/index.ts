@@ -1,38 +1,37 @@
-import { type ZodObject, z, type SafeParseReturnType } from 'zod'
-import { reactive, computed, type ComputedRef } from 'vue'
+import { type ZodObject, z } from "zod";
 
 type AjVExtendedSchemaFieldType =
-  | 'header'
-  | 'subheader'
-  | 'hr'
-  | 'info'
-  | 'string'
-  | 'uuid'
-  | 'url'
-  | 'ip'
-  | 'email'
-  | 'date'
-  | 'datetime'
-  | 'time'
-  | 'number'
-  | 'boolean'
-  | 'array'
-  | 'tuple'
-  | 'null'
+  | "header"
+  | "subheader"
+  | "hr"
+  | "info"
+  | "string"
+  | "uuid"
+  | "url"
+  | "ip"
+  | "email"
+  | "date"
+  | "datetime"
+  | "time"
+  | "number"
+  | "boolean"
+  | "array"
+  | "tuple"
+  | "null";
 
 type AjvExtendedSchemaField =
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  /* biome-ignore lint/suspicious/noExplicitAny: */
   | Record<string, any>
   | AjvExtendedSchemaObject
   | {
       /**
        * The name of the field. This is used as the name by default.
        */
-      name: string
+      name: string;
       /**
        * The type of the field. Default is `string`.
        */
-      type?: AjVExtendedSchemaFieldType
+      type?: AjVExtendedSchemaFieldType;
       /**
        * The format of the tuple or array.
        */
@@ -40,139 +39,142 @@ type AjvExtendedSchemaField =
         | AjVExtendedSchemaFieldType
         | AjVExtendedSchemaFieldType[]
         | AjvExtendedSchemaObject
-        | AjvExtendedSchemaObject[]
+        | AjvExtendedSchemaObject[];
+      /**
+       * Whether the field is nullable.
+       */
+      nullable?: boolean;
       /**
        * A set of valid values for the input.
        */
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      enum?: any[]
+      /* biome-ignore lint/suspicious/noExplicitAny: */
+      enum?: any[];
       /**
        * The minimum length of the input.
        */
-      minLength?: number
+      minLength?: number;
       /**
        * The maximum length of the input.
        */
-      maxLength?: number
+      maxLength?: number;
       /**
        * The minimum value of the input.
        */
-      min?: string | number | ['(' | '[', string | number]
+      min?: string | number | ["(" | "[", string | number];
       /**
        * The maximum value of the input.
        */
-      max?: string | number | [')' | ']', string | number]
+      max?: string | number | [")" | "]", string | number];
       /**
        * The length of the input.
        */
-      length?: number
+      length?: number;
       /**
        * A regular expression to validate the input.
        */
-      pattern?: string
+      pattern?: string;
       /**
        * A string that should be a part of the input.
        */
-      includes?: string
+      includes?: string;
       /**
        * A string that should be at the start of the input.
        */
-      startsWith?: string
+      startsWith?: string;
       /**
        * A string that should be at the end of the input.
        */
-      endsWith?: string
+      endsWith?: string;
       /**
-       * Attributes to add to the field.
+       * Attributes for UI passthrough.
        */
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      fieldAttrs?: Record<string, any>
-      /**
-       * Attributes to add to the input.
-       */
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      inputAttrs?: Record<string, any>
-    }
+      /* biome-ignore lint/suspicious/noExplicitAny: */
+      attrs?: Record<string, any>;
+    };
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+/* biome-ignore lint/suspicious/noExplicitAny: */
 type AjvExtendedSchemaObject = Record<string, any> & {
   /**
    * The type of the field.
    */
-  type: 'object'
+  type: "object";
   /**
    * The properties of the object.
    */
-  properties?: Record<string, AjvExtendedSchemaField>
+  properties?: Record<string, AjvExtendedSchemaField>;
   /**
    * The required fields of the schema.
    */
-  required: string[]
-}
+  required: string[];
+};
 
 export type AjvExtendedSchema = {
   /**
    * A form must be an object.
    */
-  type: 'object'
+  type: "object";
   /**
    * The properties of the schema.
    */
-  properties: Record<string, AjvExtendedSchemaField>
+  properties: Record<string, AjvExtendedSchemaField>;
   /**
    * The required fields of the schema.
    */
-  required: string[]
-}
+  required: string[];
+};
 
 function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const shape: Record<string, any> = {}
+  /* biome-ignore lint/suspicious/noExplicitAny: */
+  const shape: Record<string, any> = {};
 
-  if (schema.type === 'object' && typeof schema.properties === 'object') {
+  if (schema.type === "object" && typeof schema.properties === "object") {
     for (const key in schema.properties) {
       if (
-        schema.properties[key].type === 'header' ||
-        schema.properties[key].type === 'subheader' ||
-        schema.properties[key].type === 'hr' ||
-        schema.properties[key].type === 'info'
+        schema.properties[key].type === "header" ||
+        schema.properties[key].type === "subheader" ||
+        schema.properties[key].type === "hr" ||
+        schema.properties[key].type === "info"
       ) {
-        continue
+        continue;
       }
 
-      if (schema.properties[key].type === 'object') {
-        shape[key] = generateSchema(schema.properties[key] as AjvExtendedSchemaObject)
-      } else if (schema.properties[key].type === 'array') {
-        if (typeof schema.properties[key].data === 'object') {
+      if (schema.properties[key].type === "object") {
+        shape[key] = generateSchema(
+          schema.properties[key] as AjvExtendedSchemaObject
+        );
+      } else if (schema.properties[key].type === "array") {
+        if (typeof schema.properties[key].data === "object") {
           shape[key] = z.array(
-            generateSchema(schema.properties[key].data as AjvExtendedSchemaObject),
+            generateSchema(
+              schema.properties[key].data as AjvExtendedSchemaObject
+            ),
             {
               required_error: `${schema.properties[key].name} is required.`,
-            },
-          )
-        } else if (schema.properties[key].data === 'number') {
+            }
+          );
+        } else if (schema.properties[key].data === "number") {
           shape[key] = z.array(z.number(), {
             required_error: `${schema.properties[key].name} is required.`,
-          })
-        } else if (schema.properties[key].data === 'boolean') {
+          });
+        } else if (schema.properties[key].data === "boolean") {
           shape[key] = z.array(z.boolean(), {
             required_error: `${schema.properties[key].name} is required.`,
-          })
-        } else if (schema.properties[key].data === 'null') {
+          });
+        } else if (schema.properties[key].data === "null") {
           shape[key] = z.array(z.null(), {
             required_error: `${schema.properties[key].name} is required.`,
-          })
+          });
         } else if (
-          schema.properties[key].data === 'date' ||
-          schema.properties[key].data === 'datetime'
+          schema.properties[key].data === "date" ||
+          schema.properties[key].data === "datetime"
         ) {
           shape[key] = z.array(z.date(), {
             required_error: `${schema.properties[key].name} is required.`,
-          })
+          });
         } else {
           shape[key] = z.array(z.string(), {
             required_error: `${schema.properties[key].name} is required.`,
-          })
+          });
         }
 
         if (schema.properties[key].minLength) {
@@ -180,7 +182,7 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
             message:
               `${schema.properties[key].name} must have at least ` +
               `${schema.properties[key].minLength} items.`,
-          })
+          });
         }
 
         if (schema.properties[key].maxLength) {
@@ -188,57 +190,61 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
             message:
               `${schema.properties[key].name} must have less than ` +
               `${schema.properties[key].minLength} items.`,
-          })
+          });
         }
-      } else if (schema.properties[key].type === 'tuple') {
-        console.warn('Tuple validation is not complete.')
-        shape[key] = z.tuple([])
+      } else if (schema.properties[key].type === "tuple") {
+        console.warn("Tuple validation is not complete.");
+        shape[key] = z.tuple([]);
       } else if (schema.properties[key].enum) {
         shape[key] = z.enum(schema.properties[key].enum, {
           invalid_type_error: `${
             schema.properties[key].name
-          } must be one of the following: ${schema.properties[key].enum.join(', ')}.`,
+          } must be one of the following: ${schema.properties[key].enum.join(
+            ", "
+          )}.`,
           required_error: `${
             schema.properties[key].name
-          } must be one of the following: ${schema.properties[key].enum.join(', ')}.`,
-        })
-      } else if (schema.properties[key].type === 'number') {
+          } must be one of the following: ${schema.properties[key].enum.join(
+            ", "
+          )}.`,
+        });
+      } else if (schema.properties[key].type === "number") {
         shape[key] = z.number({
           invalid_type_error: `${schema.properties[key].name} must be a number.`,
           required_error: `${schema.properties[key].name} is required.`,
-        })
+        });
 
-        if (schema.properties[key].min) {
+        if (typeof schema.properties[key].min === "number") {
           shape[key] = shape[key].min(schema.properties[key].min, {
             message:
               `${schema.properties[key].name} must be at least ` +
               `${schema.properties[key].min}.`,
-          })
+          });
         }
 
-        if (schema.properties[key].max) {
+        if (typeof schema.properties[key].max === "number") {
           shape[key] = shape[key].max(schema.properties[key].max, {
             message:
               `${schema.properties[key].name} must be less than ` +
               `${schema.properties[key].max}.`,
-          })
+          });
         }
-      } else if (schema.properties[key].type === 'boolean') {
+      } else if (schema.properties[key].type === "boolean") {
         shape[key] = z.boolean({
           invalid_type_error: `${schema.properties[key].name} must be a boolean.`,
           required_error: `${schema.properties[key].name} is required.`,
-        })
-      } else if (schema.properties[key].type === 'null') {
+        });
+      } else if (schema.properties[key].type === "null") {
         shape[key] = z.null({
           invalid_type_error: `${schema.properties[key].name} must be null.`,
           required_error: `${schema.properties[key].name} is required.`,
-        })
-      } else if (schema.properties[key].type === 'date') {
+        });
+      } else if (schema.properties[key].type === "date") {
         shape[key] = z.coerce.date({
           invalid_type_error: `${schema.properties[key].name} must be a date.`,
           required_error: `${schema.properties[key].name} is required.`,
-        })
-      } else if (schema.properties[key].type === 'datetime') {
+        });
+      } else if (schema.properties[key].type === "datetime") {
         shape[key] = z
           .string({
             invalid_type_error: `${schema.properties[key].name} must be a string.`,
@@ -246,39 +252,39 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
           })
           .datetime({
             message: `${schema.properties[key].name} must be a datetime.`,
-          })
-      } else if (schema.properties[key].type === 'time') {
+          });
+      } else if (schema.properties[key].type === "time") {
         shape[key] = (
           z.string({
             invalid_type_error: `${schema.properties[key].name} must be a string.`,
             required_error: `${schema.properties[key].name} is required.`,
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            /* biome-ignore lint/suspicious/noExplicitAny: */
           }) as any
         ).time({
           message: `${schema.properties[key].name} must be a time.`,
-        })
+        });
       } else {
         shape[key] = z.string({
           invalid_type_error: `${schema.properties[key].name} must be a string.`,
           required_error: `${schema.properties[key].name} is required.`,
-        })
+        });
 
-        if (schema.properties[key].type === 'uuid') {
+        if (schema.properties[key].type === "uuid") {
           shape[key] = shape[key].uuid({
             message: `${schema.properties[key].name} must be a valid UUID.`,
-          })
-        } else if (schema.properties[key].type === 'url') {
+          });
+        } else if (schema.properties[key].type === "url") {
           shape[key] = shape[key].url({
             message: `${schema.properties[key].name} must be a valid URL.`,
-          })
-        } else if (schema.properties[key].type === 'email') {
+          });
+        } else if (schema.properties[key].type === "email") {
           shape[key] = shape[key].email({
             message: `${schema.properties[key].name} must be a valid email address.`,
-          })
-        } else if (schema.properties[key].type === 'ip') {
+          });
+        } else if (schema.properties[key].type === "ip") {
           shape[key] = shape[key].ip({
             message: `${schema.properties[key].name} must be a valid IP address.`,
-          })
+          });
         }
 
         if (schema.properties[key].minLength) {
@@ -286,7 +292,7 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
             message:
               `${schema.properties[key].name} must be at least ` +
               `${schema.properties[key].minLength} characters.`,
-          })
+          });
         }
 
         if (schema.properties[key].maxLength) {
@@ -294,7 +300,7 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
             message:
               `${schema.properties[key].name} must be less than ` +
               `${schema.properties[key].maxLength} characters.`,
-          })
+          });
         }
 
         if (schema.properties[key].length) {
@@ -302,13 +308,16 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
             message:
               `${schema.properties[key].name} must be ` +
               `${schema.properties[key].length} characters.`,
-          })
+          });
         }
 
         if (schema.properties[key].pattern) {
-          shape[key] = shape[key].regex(new RegExp(schema.properties[key].pattern), {
-            message: `${schema.properties[key].name} does not match required format.`,
-          })
+          shape[key] = shape[key].regex(
+            new RegExp(schema.properties[key].pattern),
+            {
+              message: `${schema.properties[key].name} does not match required format.`,
+            }
+          );
         }
 
         if (schema.properties[key].includes) {
@@ -316,15 +325,18 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
             message:
               `${schema.properties[key].name} must include ` +
               `${schema.properties[key].includes}.`,
-          })
+          });
         }
 
         if (schema.properties[key].startsWith) {
-          shape[key] = shape[key].startsWith(schema.properties[key].startsWith, {
-            message:
-              `${schema.properties[key].name} must start with ` +
-              `${schema.properties[key].startsWith}.`,
-          })
+          shape[key] = shape[key].startsWith(
+            schema.properties[key].startsWith,
+            {
+              message:
+                `${schema.properties[key].name} must start with ` +
+                `${schema.properties[key].startsWith}.`,
+            }
+          );
         }
 
         if (schema.properties[key].endsWith) {
@@ -332,23 +344,40 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
             message:
               `${schema.properties[key].name} must end with ` +
               `${schema.properties[key].endsWith}.`,
-          })
+          });
         }
       }
 
       if (!schema.required.includes(key)) {
-        shape[key] = shape[key].optional()
+        shape[key] = shape[key].optional();
+      }
+
+      if (schema.properties[key].nullable) {
+        shape[key] = shape[key].nullable();
       }
     }
   }
 
-  return z.object(shape)
+  return z.object(shape);
 }
+
+/**
+ * The required return for a form.
+ */
+export type FormReturnType = {
+  input: AjvExtendedSchema;
+  /* biome-ignore lint/suspicious/noExplicitAny: */
+  state: Record<string, any>;
+  /* biome-ignore lint/suspicious/noExplicitAny: */
+  schema: ZodObject<Record<string, any>>;
+  reset: () => void;
+};
 
 /**
  * From an extended AJV schema, generate a reactive form object with validation.
  *
  * @param schema - An extended AJV schema.
+ * @param state - The form state.
  * @param defaults - The default values for the form.
  * @returns An object with the following properties:
  * - `input`: The extended Ajv schema input.
@@ -358,41 +387,47 @@ function generateSchema(schema: AjvExtendedSchema | AjvExtendedSchemaObject) {
  * - `isValid`: Whether the form is currently valid.
  * - `reset`: Reset the form to its default values.
  */
-export default function useForm(
+/* biome-ignore lint/suspicious/noExplicitAny: */
+export function form<T = Record<string, any>>(
   schema: AjvExtendedSchema,
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  defaults: Record<string, any> = {},
-): {
-    input: AjvExtendedSchema
-    state: Record<string, any>
-    schema: ZodObject<Record<string, any>>
-    status: ComputedRef<SafeParseReturnType<{
-        [x: string]: any;
-    }, {
-        [x: string]: any;
-    }>>
-    isValid: ComputedRef<boolean>
-    reset: () => void
-} {
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const state = reactive<Record<string, any>>({})
-  const zod = generateSchema(schema)
-  const status = computed(() => zod.safeParse(state))
+  /* biome-ignore lint/suspicious/noExplicitAny: */
+  state: any,
+  options: Partial<{
+    /* biome-ignore lint/suspicious/noExplicitAny: */
+    defaults: Record<string, any>;
+    impl: T;
+  }> = {
+    defaults: {},
+    impl: {} as T,
+  }
+): FormReturnType & T {
+  const _options = {
+    defaults: {},
+    impl: {},
+    ...options,
+  };
 
   /**
    * Reset the form to its default values.
    */
   function reset() {
-    for (const key in defaults) {
-      state[key] = defaults[key]
+    for (const key in state) {
+      if (typeof _options.defaults[key] === "undefined") {
+        delete state[key];
+      }
+    }
+
+    for (const key in _options.defaults) {
+      state[key] = _options.defaults[key];
     }
   }
 
-  reset()
+  reset();
 
   return {
+    ..._options.impl,
     /**
-     * The extended Ajv schema input.
+     * The input schema definition.
      */
     input: schema,
     /**
@@ -400,20 +435,11 @@ export default function useForm(
      */
     state,
     /**
-     * The Zod schema.
+     * A Zod schema for the input.
      */
-    schema: zod,
-    /**
-     * The form validation status.
-     */
-    status,
-    /**
-     * Whether the form is currently valid.
-     */
-    isValid: computed(() => status.value.success),
-    /**
-     * Reset the form to its default values.
-     */
+    schema: generateSchema(schema),
     reset,
-  }
+  } as FormReturnType & T;
 }
+
+export default form;
