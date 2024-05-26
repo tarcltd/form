@@ -1,6 +1,6 @@
 {
   "name": "@tarcltd/form",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Create a JS form, Zod validator, and various utilities, from a simple JSON schema.",
   "scripts": {
     "install": "tsx scripts/reversion.ts",
