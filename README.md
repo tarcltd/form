@@ -11,7 +11,7 @@ create reliable forms and validation across many different frontend frameworks.
 ## Installation
 
 ```bash
-npm install @tarcltd/form
+npx jsr add @tarcltd/form
 ```
 
 ## Usage
