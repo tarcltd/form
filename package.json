@@ -1,7 +1,7 @@
 {
   "name": "@tarcltd/form",
-  "version": "1.0.3",
-  "description": "Create a JS form, Zod validator, and various utilities, from a simple JSON schema.",
+  "version": "1.0.4",
+  "description": "Create a JS object for use in form UI, Zod schema, and various utilities, from a simple JSON object.",
   "scripts": {
     "install": "tsx scripts/reversion.ts",
     "lint": "npx @biomejs/biome lint src __tests__",

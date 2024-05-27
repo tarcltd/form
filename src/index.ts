@@ -1,6 +1,6 @@
 import { type ZodObject, z } from "zod";
 
-type SchemaFieldType =
+export type SchemaFieldType =
   | "header"
   | "subheader"
   | "hr"
@@ -19,7 +19,7 @@ type SchemaFieldType =
   | "tuple"
   | "null";
 
-type SchemaField =
+export type SchemaField =
   /* biome-ignore lint/suspicious/noExplicitAny: */
   | Record<string, any>
   | SchemaObject
@@ -93,7 +93,7 @@ type SchemaField =
     };
 
 /* biome-ignore lint/suspicious/noExplicitAny: */
-type SchemaObject = Record<string, any> & {
+export type SchemaObject = Record<string, any> & {
   /**
    * The type of the field.
    */
@@ -108,7 +108,7 @@ type SchemaObject = Record<string, any> & {
   required: string[];
 };
 
-type Schema = {
+export type Schema = {
   /**
    * A form must be an object.
    */
@@ -139,15 +139,11 @@ function generateSchema(schema: Schema | SchemaObject) {
       }
 
       if (schema.properties[key].type === "object") {
-        shape[key] = generateSchema(
-          schema.properties[key] as SchemaObject
-        );
+        shape[key] = generateSchema(schema.properties[key] as SchemaObject);
       } else if (schema.properties[key].type === "array") {
         if (typeof schema.properties[key].data === "object") {
           shape[key] = z.array(
-            generateSchema(
-              schema.properties[key].data as SchemaObject
-            ),
+            generateSchema(schema.properties[key].data as SchemaObject),
             {
               required_error: `${schema.properties[key].name} is required.`,
             }
@@ -364,7 +360,7 @@ function generateSchema(schema: Schema | SchemaObject) {
 /**
  * The required return for a form.
  */
-type FormReturnType = {
+export type FormReturnType = {
   input: Schema;
   /* biome-ignore lint/suspicious/noExplicitAny: */
   state: Record<string, any>;
