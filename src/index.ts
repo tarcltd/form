@@ -86,7 +86,10 @@ export type SchemaField =
        */
       endsWith?: string;
       /**
-       * Attributes for UI passthrough.
+       * Attributes for arbitrary functionality that may not be universally 
+       * supported. Functionality available in this library is limited to 
+       * `default`, which sets the default value of the field if another is not 
+       * provided.
        */
       /* biome-ignore lint/suspicious/noExplicitAny: */
       attrs?: Record<string, any>;
@@ -410,6 +413,12 @@ export function form<T = Record<string, any>>(
     for (const key in state) {
       if (typeof _options.defaults[key] === "undefined") {
         delete state[key];
+      }
+    }
+
+    for (const key in schema.properties) {
+      if (typeof schema.properties[key].attrs?.default !== "undefined") {
+        state[key] = schema.properties[key].attrs.default;
       }
     }
 
