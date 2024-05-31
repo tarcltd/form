@@ -5,7 +5,8 @@ export default defineConfig({
     globals: true,
     environment: "node",
     coverage: {
-        all: true
+        all: true,
+        'exclude': ['scripts/']
     },
     include: ["__tests__/**/*.spec.ts"],
   },

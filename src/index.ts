@@ -1,10 +1,15 @@
 import { type ZodObject, z } from "zod";
 
+/**
+ * Supported schema field types.
+ */
 export type SchemaFieldType =
   | "header"
   | "subheader"
+  | "paragraph"
   | "hr"
   | "info"
+  | "warning"
   | "string"
   | "uuid"
   | "url"
@@ -16,13 +21,15 @@ export type SchemaFieldType =
   | "number"
   | "boolean"
   | "array"
-  | "tuple"
   | "null";
 
+/**
+ * A schema field.
+ */
 export type SchemaField =
   /* biome-ignore lint/suspicious/noExplicitAny: */
   | Record<string, any>
-  | SchemaObject
+  | Schema
   | {
       /**
        * The name of the field. This is used as the name by default.
@@ -33,13 +40,9 @@ export type SchemaField =
        */
       type?: SchemaFieldType;
       /**
-       * The format of the tuple or array.
+       * The format of the array.
        */
-      data?:
-        | SchemaFieldType
-        | SchemaFieldType[]
-        | SchemaObject
-        | SchemaObject[];
+      data?: SchemaFieldType | SchemaFieldType[] | Schema | Schema[];
       /**
        * Whether the field is nullable.
        */
@@ -86,19 +89,44 @@ export type SchemaField =
        */
       endsWith?: string;
       /**
-       * Attributes for arbitrary functionality that may not be universally 
-       * supported. Functionality available in this library is limited to 
-       * `default`, which sets the default value of the field if another is not 
+       * Attributes for arbitrary functionality that may not be universally
+       * supported. Functionality available in this library is limited to
+       * `default`, which sets the default value of the field if another is not
        * provided.
        */
       /* biome-ignore lint/suspicious/noExplicitAny: */
       attrs?: Record<string, any>;
     };
 
+/**
+ * A JSON schema for a form or a sub-form object.
+ */
 /* biome-ignore lint/suspicious/noExplicitAny: */
-export type SchemaObject = Record<string, any> & {
+export type Schema = Record<string, any> & {
   /**
-   * The type of the field.
+   * The optional external JSON schema URL that this schema adheres to.
+   */
+  $schema?: string;
+  /**
+   * The optional unique identifier of the schema. Typically a URL.
+   */
+  $id?: string;
+  /**
+   * The optional title of the schema.
+   */
+  title?: string;
+  /**
+   * The optional description of the schema.
+   */
+  description?: string;
+  /**
+   * The optional
+   * {@link https://www.iso.org/iso-8601-date-and-time-format.html|ISO 8601}
+   * publish date of the schema.
+   */
+  published_at?: string;
+  /**
+   * This must be `object`.
    */
   type: "object";
   /**
@@ -109,24 +137,14 @@ export type SchemaObject = Record<string, any> & {
    * The required fields of the schema.
    */
   required: string[];
+  /**
+   * The optional metadata attached to the schema.
+   */
+  /* biome-ignore lint/suspicious/noExplicitAny: */
+  metadata?: Record<string, any>;
 };
 
-export type Schema = {
-  /**
-   * A form must be an object.
-   */
-  type: "object";
-  /**
-   * The properties of the schema.
-   */
-  properties: Record<string, SchemaField>;
-  /**
-   * The required fields of the schema.
-   */
-  required: string[];
-};
-
-function generateSchema(schema: Schema | SchemaObject) {
+function generateSchema(schema: Schema) {
   /* biome-ignore lint/suspicious/noExplicitAny: */
   const shape: Record<string, any> = {};
 
@@ -135,18 +153,20 @@ function generateSchema(schema: Schema | SchemaObject) {
       if (
         schema.properties[key].type === "header" ||
         schema.properties[key].type === "subheader" ||
+        schema.properties[key].type === "paragraph" ||
         schema.properties[key].type === "hr" ||
-        schema.properties[key].type === "info"
+        schema.properties[key].type === "info" ||
+        schema.properties[key].type === "warning"
       ) {
         continue;
       }
 
       if (schema.properties[key].type === "object") {
-        shape[key] = generateSchema(schema.properties[key] as SchemaObject);
+        shape[key] = generateSchema(schema.properties[key] as Schema);
       } else if (schema.properties[key].type === "array") {
         if (typeof schema.properties[key].data === "object") {
           shape[key] = z.array(
-            generateSchema(schema.properties[key].data as SchemaObject),
+            generateSchema(schema.properties[key].data as Schema),
             {
               required_error: `${schema.properties[key].name} is required.`,
             }
@@ -191,21 +211,10 @@ function generateSchema(schema: Schema | SchemaObject) {
               `${schema.properties[key].minLength} items.`,
           });
         }
-      } else if (schema.properties[key].type === "tuple") {
-        console.warn("Tuple validation is not complete.");
-        shape[key] = z.tuple([]);
       } else if (schema.properties[key].enum) {
         shape[key] = z.enum(schema.properties[key].enum, {
-          invalid_type_error: `${
-            schema.properties[key].name
-          } must be one of the following: ${schema.properties[key].enum.join(
-            ", "
-          )}.`,
-          required_error: `${
-            schema.properties[key].name
-          } must be one of the following: ${schema.properties[key].enum.join(
-            ", "
-          )}.`,
+          invalid_type_error: `${schema.properties[key].name} is not a valid option.`,
+          required_error: `${schema.properties[key].name} is not a valid option.`,
         });
       } else if (schema.properties[key].type === "number") {
         shape[key] = z.number({
@@ -230,7 +239,7 @@ function generateSchema(schema: Schema | SchemaObject) {
         }
       } else if (schema.properties[key].type === "boolean") {
         shape[key] = z.boolean({
-          invalid_type_error: `${schema.properties[key].name} must be a boolean.`,
+          invalid_type_error: `${schema.properties[key].name} must be true or false.`,
           required_error: `${schema.properties[key].name} is required.`,
         });
       } else if (schema.properties[key].type === "null") {
@@ -240,7 +249,7 @@ function generateSchema(schema: Schema | SchemaObject) {
         });
       } else if (schema.properties[key].type === "date") {
         shape[key] = z.coerce.date({
-          invalid_type_error: `${schema.properties[key].name} must be a date.`,
+          invalid_type_error: `${schema.properties[key].name} must be a valid date.`,
           required_error: `${schema.properties[key].name} is required.`,
         });
       } else if (schema.properties[key].type === "datetime") {
@@ -250,7 +259,7 @@ function generateSchema(schema: Schema | SchemaObject) {
             required_error: `${schema.properties[key].name} is required.`,
           })
           .datetime({
-            message: `${schema.properties[key].name} must be a datetime.`,
+            message: `${schema.properties[key].name} must be a valid datetime.`,
           });
       } else if (schema.properties[key].type === "time") {
         shape[key] = (
@@ -260,7 +269,7 @@ function generateSchema(schema: Schema | SchemaObject) {
             /* biome-ignore lint/suspicious/noExplicitAny: */
           }) as any
         ).time({
-          message: `${schema.properties[key].name} must be a time.`,
+          message: `${schema.properties[key].name} must be a valid time.`,
         });
       } else {
         shape[key] = z.string({
@@ -323,7 +332,7 @@ function generateSchema(schema: Schema | SchemaObject) {
           shape[key] = shape[key].includes(schema.properties[key].includes, {
             message:
               `${schema.properties[key].name} must include ` +
-              `${schema.properties[key].includes}.`,
+              `"${schema.properties[key].includes}".`,
           });
         }
 
@@ -333,7 +342,7 @@ function generateSchema(schema: Schema | SchemaObject) {
             {
               message:
                 `${schema.properties[key].name} must start with ` +
-                `${schema.properties[key].startsWith}.`,
+                `"${schema.properties[key].startsWith}".`,
             }
           );
         }
@@ -342,7 +351,7 @@ function generateSchema(schema: Schema | SchemaObject) {
           shape[key] = shape[key].endsWith(schema.properties[key].endsWith, {
             message:
               `${schema.properties[key].name} must end with ` +
-              `${schema.properties[key].endsWith}.`,
+              `"${schema.properties[key].endsWith}".`,
           });
         }
       }

@@ -48,7 +48,6 @@ console.log(schema.safeParse(state).success); // true
 
 This library is a work in progress. Issues and PRs are welcome. 😀
 
-- `tuple` validation is not complete and should not be used.
 - Full Zod support is not complete. We intend for the schema to support most/all
   Zod features, but we are not there yet.
 - JSON schema for the input to the form factory is not available. Please rely on

@@ -1,6 +1,6 @@
 {
   "name": "@tarcltd/form",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Create a JS object for use in form UI, Zod schema, and various utilities, from a simple JSON object.",
   "scripts": {
     "install": "tsx scripts/reversion.ts",

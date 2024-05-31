@@ -641,31 +641,6 @@ describe("fields", () => {
     expect(schema.safeParse(state).success).toBe(true);
   });
 
-  it("supports tuple", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          tuple: {
-            type: "tuple",
-            data: ["number", "string"],
-          },
-        },
-        required: ["tuple"],
-      },
-      {},
-      {}
-    );
-
-    expect(state).toEqual({});
-    expect(schema.safeParse(state).success).toBe(false);
-
-    state.tuple = [];
-    expect(state).toEqual({ tuple: [] });
-    // TODO: This should be false after implementation
-    expect(schema.safeParse(state).success).toBe(true);
-  });
-
   it("supports null", () => {
     const { state, schema } = form(
       {
