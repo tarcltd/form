@@ -132,7 +132,7 @@ export type Schema = Record<string, any> & {
   /**
    * The properties of the object.
    */
-  properties?: Record<string, SchemaField>;
+  properties: Record<string, SchemaField>;
   /**
    * The required fields of the schema.
    */
