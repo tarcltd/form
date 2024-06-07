@@ -25,11 +25,14 @@ const { state, schema } = createForm(
     properties: {
       name: {
         type: "string",
+        name: "Name",
         minLength: 3,
         pattern: "\w+\s\w+",
       },
       email: {
-        type: "email",
+        type: "string",
+        name: "Email",
+        format: "email",
         nullable: true,
       },
     },
@@ -41,6 +44,7 @@ const { state, schema } = createForm(
   }
 );
 
+// `schema` is a Zod object
 console.log(schema.safeParse(state).success); // true
 ```
 
@@ -52,7 +56,6 @@ This library is a work in progress. Issues and PRs are welcome. 😀
   Zod features, but we are not there yet.
 - JSON schema for the input to the form factory is not available. Please rely on
   the TypeScript type definitions for the input to the form factory.
-- Narrowed types specified by the field type for easier development.
 
 ## License
 

@@ -1,105 +1,34 @@
-import { type ZodObject, z } from "zod";
+import { z } from "zod";
 
 /**
- * Supported schema field types.
+ * A generator type used for narrowing. This is for internal use only.
  */
-export type SchemaFieldType =
-  | "header"
-  | "subheader"
-  | "paragraph"
-  | "hr"
-  | "info"
-  | "warning"
-  | "string"
-  | "uuid"
-  | "url"
-  | "ip"
-  | "email"
-  | "date"
-  | "datetime"
-  | "time"
-  | "number"
-  | "boolean"
-  | "array"
-  | "null";
-
-/**
- * A schema field.
- */
-export type SchemaField =
+/* biome-ignore lint/suspicious/noExplicitAny: */
+export type SchemaFieldType<T extends Record<string, any>> = {
+  /**
+   * The name of the field. This is used as the name by default.
+   */
+  name: string;
+  /**
+   * The description of the field.
+   */
+  description?: string;
+  /**
+   * Attributes for arbitrary functionality that may not be universally
+   * supported. Functionality available in this library is limited to
+   * `default`, which sets the default value of the field if another is not
+   * provided.
+   */
   /* biome-ignore lint/suspicious/noExplicitAny: */
-  | Record<string, any>
-  | Schema
-  | {
-      /**
-       * The name of the field. This is used as the name by default.
-       */
-      name: string;
-      /**
-       * The type of the field. Default is `string`.
-       */
-      type?: SchemaFieldType;
-      /**
-       * The format of the array.
-       */
-      data?: SchemaFieldType | SchemaFieldType[] | Schema | Schema[];
-      /**
-       * Whether the field is nullable.
-       */
-      nullable?: boolean;
-      /**
-       * A set of valid values for the input.
-       */
-      /* biome-ignore lint/suspicious/noExplicitAny: */
-      enum?: any[];
-      /**
-       * The minimum length of the input.
-       */
-      minLength?: number;
-      /**
-       * The maximum length of the input.
-       */
-      maxLength?: number;
-      /**
-       * The minimum value of the input.
-       */
-      min?: string | number | ["(" | "[", string | number];
-      /**
-       * The maximum value of the input.
-       */
-      max?: string | number | [")" | "]", string | number];
-      /**
-       * The length of the input.
-       */
-      length?: number;
-      /**
-       * A regular expression to validate the input.
-       */
-      pattern?: string;
-      /**
-       * A string that should be a part of the input.
-       */
-      includes?: string;
-      /**
-       * A string that should be at the start of the input.
-       */
-      startsWith?: string;
-      /**
-       * A string that should be at the end of the input.
-       */
-      endsWith?: string;
-      /**
-       * Attributes for arbitrary functionality that may not be universally
-       * supported. Functionality available in this library is limited to
-       * `default`, which sets the default value of the field if another is not
-       * provided.
-       */
-      /* biome-ignore lint/suspicious/noExplicitAny: */
-      attrs?: Record<string, any>;
-    };
+  attrs?: Record<string, any>;
+  /**
+   * Whether the field is nullable.
+   */
+  nullable?: boolean;
+} & T;
 
 /**
- * A JSON schema for a form or a sub-form object.
+ * A JSON form schema definition.
  */
 /* biome-ignore lint/suspicious/noExplicitAny: */
 export type Schema = Record<string, any> & {
@@ -144,240 +73,562 @@ export type Schema = Record<string, any> & {
   metadata?: Record<string, any>;
 };
 
-function generateSchema(schema: Schema) {
-  /* biome-ignore lint/suspicious/noExplicitAny: */
-  const shape: Record<string, any> = {};
+/**
+ * A form field definition.
+ */
+export type SchemaField =
+  | SchemaFieldType<{
+      /**
+       * The type of the field.
+       */
+      type: "object";
+      /**
+       * The properties of the object.
+       */
+      properties?: Record<string, SchemaField>;
+      /**
+       * A definition of keys that match a pattern that should validate with a
+       * specified `SchemaField` definition.
+       *
+       * @example
+       *
+       * ```ts
+       * {
+       *   patternProperties: {
+       *     "^[0-9]{3}$": {
+       *       type: "number",
+       *       name: "Number",
+       *     },
+       *   },
+       * }
+       * ```
+       */
+      patternProperties?: Record<string, SchemaField>;
+      /**
+       * The required fields of the object. Non-required fields will be
+       * validated but marked as optional.
+       */
+      required: string[];
+    }>
+  | SchemaFieldType<{
+      /**
+       * The type of the field.
+       */
+      type: "string";
+      /**
+       * If true, the field is nullable.
+       */
+      nullable?: boolean;
+      /**
+       * A set of valid values for the input.
+       */
+      enum?: any[];
+      /**
+       * The minimum length of the input.
+       */
+      minLength?: number;
+      /**
+       * The maximum length of the input.
+       */
+      maxLength?: number;
+      /**
+       * The exact length of the input. This typically should not be used with
+       * `minLength` and `maxLength`.
+       */
+      length?: number;
+      /**
+       * A regular expression to validate the input.
+       */
+      pattern?: string;
+      /**
+       * A specific format of the input.
+       */
+      format?: "uuid" | "email" | "ip" | "url" | "date" | "datetime" | "time";
+      /**
+       * A string that the input should start with.
+       */
+      startsWith?: string;
+      /**
+       * A string that the input should end with.
+       */
+      endsWith?: string;
+      /**
+       * A string that should be included in the input.
+       */
+      includes?: string;
+    }>
+  | SchemaFieldType<{
+      /**
+       * The type of the field.
+       */
+      type: "number";
+      /**
+       * If true, the field is nullable.
+       */
+      nullable?: boolean;
+      /**
+       * The minimum value of the input. This is inclusive. Using a tuple to
+       * specify the minimum is supported.
+       *
+       * @example
+       *
+       * Must be greater than 9.
+       * ```ts
+       * {
+       *   min: ["(", 9];
+       * }
+       * ```
+       */
+      min?: number | ["(" | "[", number];
+      /**
+       * The maximum value of the input. This is inclusive by default. Using a
+       * tuple to specify the maximum is supported.
+       *
+       * @example
+       *
+       * Must be less than 10.
+       * ```ts
+       * {
+       *   max: [")", 10];
+       * }
+       * ```
+       */
+      max?: number | [")" | "]", number];
+      /**
+       * A number that the input should be a multiple of.
+       */
+      multipleOf?: number;
+    }>
+  | SchemaFieldType<{
+      /**
+       * The type of the field.
+       */
+      type: "boolean";
+      /**
+       * If true, the field is nullable.
+       */
+      nullable?: boolean;
+    }>
+  | SchemaFieldType<{
+      /**
+       * The type of the field.
+       */
+      type: "array";
+      /**
+       * If true, the field is nullable.
+       */
+      nullable?: boolean;
+      /**
+       * The data type of the array items.
+       */
+      items: SchemaField;
+      /**
+       * The minimum number of items in the array.
+       */
+      minItems?: number;
+      /**
+       * The maximum number of items in the array.
+       */
+      maxItems?: number;
+      /**
+       * The number of items in the array. This typically should not be used
+       * with `minItems` and `maxItems`.
+       */
+      length?: number;
+      /**
+       * If true, the array must have at least one item.
+       */
+      nonempty?: boolean;
+    }>
+  | SchemaFieldType<{
+      /**
+       * The type of the field.
+       */
+      type: "tuple";
+      /**
+       * If true, the field is nullable.
+       */
+      nullable?: boolean;
+      /**
+       * The data type of the tuple items.
+       */
+      items: SchemaField[];
+    }>
+  | SchemaFieldType<{
+      /**
+       * The type of the field.
+       */
+      type: "null";
+    }>
+  | {
+      /**
+       * The type of the field.
+       */
+      type:
+        | "h1"
+        | "h2"
+        | "h3"
+        | "h4"
+        | "h5"
+        | "h6"
+        | "p"
+        | "info"
+        | "warning"
+        | "error"
+        | "debug";
+      /**
+       * The content of the item.
+       */
+      content?: string;
+      /**
+       * Attributes for arbitrary functionality that may not be universally
+       * supported. Functionality available in this library is limited to
+       * `default`, which sets the default value of the field if another is not
+       * provided.
+       */
+      /* biome-ignore lint/suspicious/noExplicitAny: */
+      attrs?: Record<string, any>;
+    }
+  | {
+      /**
+       * The type of the field.
+       */
+      type: "hr";
+      /**
+       * Attributes for arbitrary functionality that may not be universally
+       * supported. Functionality available in this library is limited to
+       * `default`, which sets the default value of the field if another is not
+       * provided.
+       */
+      /* biome-ignore lint/suspicious/noExplicitAny: */
+      attrs?: Record<string, any>;
+    };
 
-  if (schema.type === "object" && typeof schema.properties === "object") {
-    for (const key in schema.properties) {
-      if (
-        schema.properties[key].type === "header" ||
-        schema.properties[key].type === "subheader" ||
-        schema.properties[key].type === "paragraph" ||
-        schema.properties[key].type === "hr" ||
-        schema.properties[key].type === "info" ||
-        schema.properties[key].type === "warning"
-      ) {
-        continue;
-      }
+/**
+ * The return type of the schema. This is for internal use only.
+ */
+export type SchemaReturnType =
+  | z.ZodObject<Record<string, any>>
+  | z.ZodRecord<z.ZodString, any>
+  | z.ZodString
+  | z.ZodDate
+  | z.ZodEnum<[string, ...string[]]>
+  | z.ZodNumber
+  | z.ZodBoolean
+  | z.ZodArray<any>
+  | z.ZodArray<any, "atleastone">
+  | z.ZodTuple<any>
+  | z.ZodNull
+  | z.ZodNullable<any>
+  | z.ZodOptional<any>
+  | undefined;
 
-      if (schema.properties[key].type === "object") {
-        shape[key] = generateSchema(schema.properties[key] as Schema);
-      } else if (schema.properties[key].type === "array") {
-        if (typeof schema.properties[key].data === "object") {
-          shape[key] = z.array(
-            generateSchema(schema.properties[key].data as Schema),
-            {
-              required_error: `${schema.properties[key].name} is required.`,
-            }
-          );
-        } else if (schema.properties[key].data === "number") {
-          shape[key] = z.array(z.number(), {
-            required_error: `${schema.properties[key].name} is required.`,
-          });
-        } else if (schema.properties[key].data === "boolean") {
-          shape[key] = z.array(z.boolean(), {
-            required_error: `${schema.properties[key].name} is required.`,
-          });
-        } else if (schema.properties[key].data === "null") {
-          shape[key] = z.array(z.null(), {
-            required_error: `${schema.properties[key].name} is required.`,
-          });
-        } else if (
-          schema.properties[key].data === "date" ||
-          schema.properties[key].data === "datetime"
-        ) {
-          shape[key] = z.array(z.date(), {
-            required_error: `${schema.properties[key].name} is required.`,
-          });
-        } else {
-          shape[key] = z.array(z.string(), {
-            required_error: `${schema.properties[key].name} is required.`,
-          });
+function generateSchema(
+  schema: Schema | SchemaField,
+  key?: string,
+  required?: string[]
+): SchemaReturnType {
+  let _schema: SchemaReturnType = undefined;
+
+  if (schema.type === "object") {
+    const shape: Record<string, any> = {};
+
+    if (typeof schema.properties === "object") {
+      for (const prop in schema.properties) {
+        const subschema = generateSchema(
+          schema.properties[prop],
+          prop,
+          schema.required
+        );
+
+        if (typeof subschema === "undefined") {
+          continue;
         }
 
-        if (schema.properties[key].minLength) {
-          shape[key] = shape[key].min(schema.properties[key].minLength, {
-            message:
-              `${schema.properties[key].name} must have at least ` +
-              `${schema.properties[key].minLength} items.`,
-          });
-        }
-
-        if (schema.properties[key].maxLength) {
-          shape[key] = shape[key].max(schema.properties[key].maxLength, {
-            message:
-              `${schema.properties[key].name} must have less than ` +
-              `${schema.properties[key].minLength} items.`,
-          });
-        }
-      } else if (schema.properties[key].enum) {
-        shape[key] = z.enum(schema.properties[key].enum, {
-          invalid_type_error: `${schema.properties[key].name} is not a valid option.`,
-          required_error: `${schema.properties[key].name} is not a valid option.`,
-        });
-      } else if (schema.properties[key].type === "number") {
-        shape[key] = z.number({
-          invalid_type_error: `${schema.properties[key].name} must be a number.`,
-          required_error: `${schema.properties[key].name} is required.`,
-        });
-
-        if (typeof schema.properties[key].min === "number") {
-          shape[key] = shape[key].min(schema.properties[key].min, {
-            message:
-              `${schema.properties[key].name} must be at least ` +
-              `${schema.properties[key].min}.`,
-          });
-        }
-
-        if (typeof schema.properties[key].max === "number") {
-          shape[key] = shape[key].max(schema.properties[key].max, {
-            message:
-              `${schema.properties[key].name} must be less than ` +
-              `${schema.properties[key].max}.`,
-          });
-        }
-      } else if (schema.properties[key].type === "boolean") {
-        shape[key] = z.boolean({
-          invalid_type_error: `${schema.properties[key].name} must be true or false.`,
-          required_error: `${schema.properties[key].name} is required.`,
-        });
-      } else if (schema.properties[key].type === "null") {
-        shape[key] = z.null({
-          invalid_type_error: `${schema.properties[key].name} must be null.`,
-          required_error: `${schema.properties[key].name} is required.`,
-        });
-      } else if (schema.properties[key].type === "date") {
-        shape[key] = z.coerce.date({
-          invalid_type_error: `${schema.properties[key].name} must be a valid date.`,
-          required_error: `${schema.properties[key].name} is required.`,
-        });
-      } else if (schema.properties[key].type === "datetime") {
-        shape[key] = z
-          .string({
-            invalid_type_error: `${schema.properties[key].name} must be a string.`,
-            required_error: `${schema.properties[key].name} is required.`,
-          })
-          .datetime({
-            message: `${schema.properties[key].name} must be a valid datetime.`,
-          });
-      } else if (schema.properties[key].type === "time") {
-        shape[key] = (
-          z.string({
-            invalid_type_error: `${schema.properties[key].name} must be a string.`,
-            required_error: `${schema.properties[key].name} is required.`,
-            /* biome-ignore lint/suspicious/noExplicitAny: */
-          }) as any
-        ).time({
-          message: `${schema.properties[key].name} must be a valid time.`,
-        });
-      } else {
-        shape[key] = z.string({
-          invalid_type_error: `${schema.properties[key].name} must be a string.`,
-          required_error: `${schema.properties[key].name} is required.`,
-        });
-
-        if (schema.properties[key].type === "uuid") {
-          shape[key] = shape[key].uuid({
-            message: `${schema.properties[key].name} must be a valid UUID.`,
-          });
-        } else if (schema.properties[key].type === "url") {
-          shape[key] = shape[key].url({
-            message: `${schema.properties[key].name} must be a valid URL.`,
-          });
-        } else if (schema.properties[key].type === "email") {
-          shape[key] = shape[key].email({
-            message: `${schema.properties[key].name} must be a valid email address.`,
-          });
-        } else if (schema.properties[key].type === "ip") {
-          shape[key] = shape[key].ip({
-            message: `${schema.properties[key].name} must be a valid IP address.`,
-          });
-        }
-
-        if (schema.properties[key].minLength) {
-          shape[key] = shape[key].min(schema.properties[key].minLength, {
-            message:
-              `${schema.properties[key].name} must be at least ` +
-              `${schema.properties[key].minLength} characters.`,
-          });
-        }
-
-        if (schema.properties[key].maxLength) {
-          shape[key] = shape[key].max(schema.properties[key].maxLength, {
-            message:
-              `${schema.properties[key].name} must be less than ` +
-              `${schema.properties[key].maxLength} characters.`,
-          });
-        }
-
-        if (schema.properties[key].length) {
-          shape[key] = shape[key].length({
-            message:
-              `${schema.properties[key].name} must be ` +
-              `${schema.properties[key].length} characters.`,
-          });
-        }
-
-        if (schema.properties[key].pattern) {
-          shape[key] = shape[key].regex(
-            new RegExp(schema.properties[key].pattern),
-            {
-              message: `${schema.properties[key].name} does not match required format.`,
-            }
-          );
-        }
-
-        if (schema.properties[key].includes) {
-          shape[key] = shape[key].includes(schema.properties[key].includes, {
-            message:
-              `${schema.properties[key].name} must include ` +
-              `"${schema.properties[key].includes}".`,
-          });
-        }
-
-        if (schema.properties[key].startsWith) {
-          shape[key] = shape[key].startsWith(
-            schema.properties[key].startsWith,
-            {
-              message:
-                `${schema.properties[key].name} must start with ` +
-                `"${schema.properties[key].startsWith}".`,
-            }
-          );
-        }
-
-        if (schema.properties[key].endsWith) {
-          shape[key] = shape[key].endsWith(schema.properties[key].endsWith, {
-            message:
-              `${schema.properties[key].name} must end with ` +
-              `"${schema.properties[key].endsWith}".`,
-          });
-        }
-      }
-
-      if (!schema.required.includes(key)) {
-        shape[key] = shape[key].optional();
-      }
-
-      if (schema.properties[key].nullable) {
-        shape[key] = shape[key].nullable();
+        shape[prop] = subschema;
       }
     }
+
+    const computedName = schema.name ?? (schema as Schema).title ?? "Form";
+
+    _schema =
+      typeof schema.patternProperties === "object"
+        ? (z
+            .record(z.string(), z.any(), {
+              invalid_type_error: `${computedName} must be an object.`,
+              required_error: `${computedName} is required.`,
+            })
+            .pipe(
+              z.custom((value) => {
+                if (
+                  !z
+                    .object(shape, {
+                      invalid_type_error: `${computedName} must be an object.`,
+                      required_error: `${computedName} is required.`,
+                    })
+                    .safeParse(value).success
+                ) {
+                  return false;
+                }
+
+                let pass = true;
+
+                for (const prop in value) {
+                  if (schema.properties && prop in schema.properties) {
+                    continue;
+                  }
+
+                  const patternDef = Object.keys(schema.patternProperties).find(
+                    (key) => new RegExp(key).test(prop)
+                  );
+
+                  if (patternDef) {
+                    const subschema = generateSchema(
+                      schema.patternProperties[patternDef],
+                      prop,
+                      schema.required
+                    );
+
+                    if (typeof subschema === "undefined") {
+                      continue;
+                    }
+
+                    pass = subschema.safeParse(value[prop]).success;
+                  }
+                }
+
+                return pass;
+              })
+            ) as unknown as z.ZodObject<Record<string, any>>)
+        : z.object(shape, {
+            invalid_type_error: `${computedName} must be an object.`,
+            required_error: `${computedName} is required.`,
+          });
+  } else if (schema.type === "string" && schema.format === "date") {
+    _schema = z.coerce.date({
+      invalid_type_error: `${schema.name} must be a valid date.`,
+      required_error: `${schema.name} is required.`,
+    });
+  } else if (schema.type === "string") {
+    _schema = z.string({
+      invalid_type_error: `${schema.name} must be a string.`,
+      required_error: `${schema.name} is required.`,
+    });
+
+    if (schema.format === "uuid") {
+      _schema = _schema.uuid({
+        message: `${schema.name} must be a valid UUID.`,
+      });
+    } else if (schema.format === "url") {
+      _schema = _schema.url({
+        message: `${schema.name} must be a valid URL.`,
+      });
+    } else if (schema.format === "email") {
+      _schema = _schema.email({
+        message: `${schema.name} must be a valid email address.`,
+      });
+    } else if (schema.format === "ip") {
+      _schema = _schema.ip({
+        message: `${schema.name} must be a valid IP address.`,
+      });
+    } else if (schema.format === "datetime") {
+      _schema = _schema.datetime({
+        message: `${schema.name} must be a valid datetime.`,
+      });
+    } else if (schema.format === "time") {
+      _schema = _schema.time({
+        message: `${schema.name} must be a valid time.`,
+      });
+    }
+
+    if (typeof schema.minLength === "number") {
+      _schema = _schema.min(schema.minLength, {
+        message:
+          `${schema.name} must be at least ` +
+          `${schema.minLength} characters.`,
+      });
+    }
+
+    if (typeof schema.maxLength === "number") {
+      _schema = _schema.max(schema.maxLength, {
+        message:
+          `${schema.name} must be less than ` +
+          `${schema.maxLength} characters.`,
+      });
+    }
+
+    if (typeof schema.length === "number") {
+      _schema = _schema.length(schema.length, {
+        message: `${schema.name} must be ` + `${schema.length} characters.`,
+      });
+    }
+
+    if (schema.pattern) {
+      _schema = _schema.regex(new RegExp(schema.pattern), {
+        message: `${schema.name} does not match required format.`,
+      });
+    }
+
+    if (schema.includes) {
+      _schema = _schema.includes(schema.includes, {
+        message: `${schema.name} must include ` + `"${schema.includes}".`,
+      });
+    }
+
+    if (schema.startsWith) {
+      _schema = _schema.startsWith(schema.startsWith, {
+        message: `${schema.name} must start with ` + `"${schema.startsWith}".`,
+      });
+    }
+
+    if (schema.endsWith) {
+      _schema = _schema.endsWith(schema.endsWith, {
+        message: `${schema.name} must end with ` + `"${schema.endsWith}".`,
+      });
+    }
+
+    if (Array.isArray(schema.enum) && schema.enum.length > 0) {
+      const enumValues: ReadonlyArray<string> = [...schema.enum];
+
+      _schema = z.enum(enumValues as [string, ...string[]], {
+        invalid_type_error: `${schema.name} is not a valid option.`,
+        required_error: `${schema.name} is not a valid option.`,
+      });
+    }
+  } else if (schema.type === "number") {
+    _schema = z.number({
+      invalid_type_error: `${schema.name} must be a number.`,
+      required_error: `${schema.name} is required.`,
+    });
+
+    if (typeof schema.min === "number") {
+      _schema = _schema.min(schema.min, {
+        message: `${schema.name} must be at least ` + `${schema.min}.`,
+      });
+    } else if (Array.isArray(schema.min) && schema.min.length === 2) {
+      if (schema.min[0] === "(") {
+        _schema = _schema.gt(schema.min[1], {
+          message: `${schema.name} must be greater than ` + `${schema.min[1]}.`,
+        });
+      } else if (schema.min[0] === "[") {
+        _schema = _schema.gte(schema.min[1], {
+          message:
+            `${schema.name} must be greater than or equal to ` +
+            `${schema.min[1]}.`,
+        });
+      }
+    }
+
+    if (typeof schema.max === "number") {
+      _schema = _schema.max(schema.max, {
+        message: `${schema.name} must be less than ` + `${schema.max}.`,
+      });
+    } else if (Array.isArray(schema.max) && schema.max.length === 2) {
+      if (schema.max[0] === ")") {
+        _schema = _schema.lt(schema.max[1], {
+          message: `${schema.name} must be less than ` + `${schema.max[1]}.`,
+        });
+      } else if (schema.max[0] === "]") {
+        _schema = _schema.lte(schema.max[1], {
+          message:
+            `${schema.name} must be less than or equal to ` +
+            `${schema.max[1]}.`,
+        });
+      }
+    }
+
+    if (typeof schema.multipleOf === "number") {
+      _schema = _schema.multipleOf(schema.multipleOf, {
+        message:
+          `${schema.name} must be a multiple of ` + `${schema.multipleOf}.`,
+      });
+    }
+  } else if (schema.type === "boolean") {
+    _schema = z.boolean({
+      invalid_type_error: `${schema.name} must be true or false.`,
+      required_error: `${schema.name} is required.`,
+    });
+  } else if (schema.type === "array") {
+    const subschema = generateSchema(schema.items);
+
+    if (typeof subschema === "undefined") {
+      return;
+    }
+
+    _schema = z.array(subschema, {
+      required_error: `${schema.name} is required.`,
+    });
+
+    if (typeof schema.minItems === "number") {
+      _schema = _schema.min(schema.minItems, {
+        message:
+          `${schema.name} must have at least ` + `${schema.minItems} items.`,
+      });
+    }
+
+    if (typeof schema.maxItems === "number") {
+      _schema = _schema.max(schema.maxItems, {
+        message:
+          `${schema.name} must have less than ` + `${schema.maxItems} items.`,
+      });
+    }
+
+    if (typeof schema.length === "number") {
+      _schema = _schema.length(schema.length, {
+        message: `${schema.name} must have ` + `${schema.length} items.`,
+      });
+    }
+
+    if (schema.nonempty === true) {
+      _schema = _schema.nonempty();
+    }
+  } else if (schema.type === "tuple") {
+    const subschema = schema.items.map((item) => generateSchema(item)) as
+      | []
+      | [z.ZodType<any>, ...z.ZodType<any>[]];
+
+    if (subschema.some((item) => typeof item === "undefined")) {
+      return;
+    }
+
+    _schema = z.tuple(subschema, {
+      required_error: `${schema.name} is required.`,
+    });
+  } else if (schema.type === "null") {
+    _schema = z.null({
+      invalid_type_error: `${schema.name} must be null.`,
+      required_error: `${schema.name} is required.`,
+    });
   }
 
-  return z.object(shape);
+  if (!_schema) {
+    return;
+  }
+
+  if (
+    typeof key === "string" &&
+    Array.isArray(required) &&
+    !required.includes(key)
+  ) {
+    _schema = _schema.optional();
+  }
+
+  if ((schema as Schema).nullable === true) {
+    _schema = _schema.nullable();
+  }
+
+  return _schema;
 }
 
 /**
- * The required return for a form.
+ * The required return for a form. This is for internal use only.
  */
 export type FormReturnType = {
   input: Schema;
   /* biome-ignore lint/suspicious/noExplicitAny: */
   state: Record<string, any>;
   /* biome-ignore lint/suspicious/noExplicitAny: */
-  schema: ZodObject<Record<string, any>>;
+  schema: z.ZodObject<Record<string, any>>;
   reset: () => void;
 };
 
@@ -399,7 +650,7 @@ export type FormReturnType = {
 export function form<T = Record<string, any>>(
   schema: Schema,
   /* biome-ignore lint/suspicious/noExplicitAny: */
-  state: any,
+  state?: any,
   options: Partial<{
     /* biome-ignore lint/suspicious/noExplicitAny: */
     defaults: Record<string, any>;
@@ -409,6 +660,8 @@ export function form<T = Record<string, any>>(
     impl: {} as T,
   }
 ): FormReturnType & T {
+  state ??= {};
+
   const _options = {
     defaults: {},
     impl: {},
@@ -427,7 +680,7 @@ export function form<T = Record<string, any>>(
 
     for (const key in schema.properties) {
       if (typeof schema.properties[key].attrs?.default !== "undefined") {
-        state[key] = schema.properties[key].attrs.default;
+        state[key] = schema.properties[key].attrs?.default;
       }
     }
 

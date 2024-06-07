@@ -1,58 +1,49 @@
 import form from "../src/index";
 
 describe("fields", () => {
-  it("supports header", () => {
-    const { input, state } = form(
-      {
-        type: "object",
-        properties: {
-          name: {
-            type: "header",
-            name: "Name",
-          },
-        },
-        required: [],
-      },
-      {},
-      {}
-    );
-
-    expect(state).toEqual({});
-    expect(input).toEqual({
+  it("removes extraneous fields", () => {
+    const { state , reset } = form({
       type: "object",
       properties: {
         name: {
-          type: "header",
+          type: "string",
           name: "Name",
+        },
+      },
+      required: ['name'],
+    }, undefined, {
+      defaults: { name: "John Doe" },
+    });
+
+    expect(state).toEqual({ name: "John Doe" });
+
+    state.something = "test";
+    expect(state).toEqual({ name: "John Doe", something: "test" });
+
+    reset();
+
+    expect(state).toEqual({ name: "John Doe" });
+  });
+
+  it("supports content items", () => {
+    const { input, state } = form({
+      type: "object",
+      properties: {
+        name: {
+          type: "h1",
+          content: "Name",
         },
       },
       required: [],
     });
-  });
-
-  it("supports subheader", () => {
-    const { input, state } = form(
-      {
-        type: "object",
-        properties: {
-          name: {
-            type: "subheader",
-            name: "Name",
-          },
-        },
-        required: [],
-      },
-      {},
-      {}
-    );
 
     expect(state).toEqual({});
     expect(input).toEqual({
       type: "object",
       properties: {
         name: {
-          type: "subheader",
-          name: "Name",
+          type: "h1",
+          content: "Name",
         },
       },
       required: [],
@@ -60,19 +51,15 @@ describe("fields", () => {
   });
 
   it("supports hr", () => {
-    const { input, state } = form(
-      {
-        type: "object",
-        properties: {
-          hr: {
-            type: "hr",
-          },
+    const { input, state } = form({
+      type: "object",
+      properties: {
+        hr: {
+          type: "hr",
         },
-        required: [],
       },
-      {},
-      {}
-    );
+      required: [],
+    });
 
     expect(state).toEqual({});
     expect(input).toEqual({
@@ -86,47 +73,17 @@ describe("fields", () => {
     });
   });
 
-  it("supports info", () => {
-    const { input, state } = form(
-      {
-        type: "object",
-        properties: {
-          info: {
-            type: "info",
-          },
-        },
-        required: [],
-      },
-      {},
-      {}
-    );
-
-    expect(state).toEqual({});
-    expect(input).toEqual({
+  it("supports string", () => {
+    const { state, schema } = form({
       type: "object",
       properties: {
-        info: {
-          type: "info",
+        string: {
+          type: "string",
+          name: "String",
         },
       },
-      required: [],
+      required: ["string"],
     });
-  });
-
-  it("supports string", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          string: {
-            type: "string",
-          },
-        },
-        required: ["string"],
-      },
-      {},
-      {}
-    );
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -141,21 +98,18 @@ describe("fields", () => {
   });
 
   it("supports lengths", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          string: {
-            type: "string",
-            minLength: 3,
-            maxLength: 10,
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+          minLength: 3,
+          maxLength: 10,
         },
-        required: ["string"],
       },
-      {},
-      {}
-    );
+      required: ["string"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -173,21 +127,47 @@ describe("fields", () => {
     expect(schema.safeParse(state).success).toBe(false);
   });
 
-  it("supports enum", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          string: {
-            type: "string",
-            enum: ["a", "b", "c"],
-          },
+  it("supports length", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+          length: 3,
         },
-        required: ["string"],
       },
-      {},
-      {}
-    );
+      required: ["string"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.string = "a";
+    expect(state).toEqual({ string: "a" });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.string = "a".repeat(3);
+    expect(state).toEqual({ string: "a".repeat(3) });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.string = "a".repeat(4);
+    expect(state).toEqual({ string: "a".repeat(4) });
+    expect(schema.safeParse(state).success).toBe(false);
+  });
+
+  it("supports enum", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+          enum: ["a", "b", "c"],
+        },
+      },
+      required: ["string"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -210,20 +190,17 @@ describe("fields", () => {
   });
 
   it("supports pattern", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          string: {
-            type: "string",
-            pattern: "[0-9]{3}",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+          pattern: "[0-9]{3}",
         },
-        required: ["string"],
       },
-      {},
-      {}
-    );
+      required: ["string"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -238,20 +215,17 @@ describe("fields", () => {
   });
 
   it("supports includes", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          string: {
-            type: "string",
-            includes: "test",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+          includes: "test",
         },
-        required: ["string"],
       },
-      {},
-      {}
-    );
+      required: ["string"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -266,20 +240,17 @@ describe("fields", () => {
   });
 
   it("supports startsWith", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          string: {
-            type: "string",
-            startsWith: "test",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+          startsWith: "test",
         },
-        required: ["string"],
       },
-      {},
-      {}
-    );
+      required: ["string"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -294,20 +265,17 @@ describe("fields", () => {
   });
 
   it("supports endsWith", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          string: {
-            type: "string",
-            endsWith: "test",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+          endsWith: "test",
         },
-        required: ["string"],
       },
-      {},
-      {}
-    );
+      required: ["string"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -322,19 +290,17 @@ describe("fields", () => {
   });
 
   it("supports uuid", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          uuid: {
-            type: "uuid",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        uuid: {
+          type: "string",
+          name: "UUID",
+          format: "uuid",
         },
-        required: ["uuid"],
       },
-      {},
-      {}
-    );
+      required: ["uuid"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -349,19 +315,17 @@ describe("fields", () => {
   });
 
   it("supports url", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          url: {
-            type: "url",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          name: "URL",
+          format: "url",
         },
-        required: ["url"],
       },
-      {},
-      {}
-    );
+      required: ["url"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -376,19 +340,17 @@ describe("fields", () => {
   });
 
   it("supports ip", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          ip: {
-            type: "ip",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        ip: {
+          type: "string",
+          name: "IP",
+          format: "ip",
         },
-        required: ["ip"],
       },
-      {},
-      {}
-    );
+      required: ["ip"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -407,19 +369,17 @@ describe("fields", () => {
   });
 
   it("supports email", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          email: {
-            type: "email",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        email: {
+          type: "string",
+          name: "Email",
+          format: "email",
         },
-        required: ["email"],
       },
-      {},
-      {}
-    );
+      required: ["email"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -434,19 +394,17 @@ describe("fields", () => {
   });
 
   it("supports date", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          date: {
-            type: "date",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        date: {
+          type: "string",
+          name: "Date",
+          format: "date",
         },
-        required: ["date"],
       },
-      {},
-      {}
-    );
+      required: ["date"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -461,19 +419,17 @@ describe("fields", () => {
   });
 
   it("supports datetime", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          datetime: {
-            type: "datetime",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        datetime: {
+          type: "string",
+          name: "Datetime",
+          format: "datetime",
         },
-        required: ["datetime"],
       },
-      {},
-      {}
-    );
+      required: ["datetime"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -488,19 +444,17 @@ describe("fields", () => {
   });
 
   it("supports time", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          time: {
-            type: "time",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        time: {
+          type: "string",
+          name: "Time",
+          format: "time",
         },
-        required: ["time"],
       },
-      {},
-      {}
-    );
+      required: ["time"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -523,19 +477,16 @@ describe("fields", () => {
   });
 
   it("supports number", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          number: {
-            type: "number",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        number: {
+          type: "number",
+          name: "Number",
         },
-        required: ["number"],
       },
-      {},
-      {}
-    );
+      required: ["number"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -550,21 +501,18 @@ describe("fields", () => {
   });
 
   it("supports min and max", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          number: {
-            type: "number",
-            min: 0,
-            max: 10,
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        number: {
+          type: "number",
+          name: "Number",
+          min: 0,
+          max: 10,
         },
-        required: ["number"],
       },
-      {},
-      {}
-    );
+      required: ["number"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -582,20 +530,166 @@ describe("fields", () => {
     expect(schema.safeParse(state).success).toBe(false);
   });
 
-  it("supports boolean", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          boolean: {
-            type: "boolean",
-          },
+  it("supports min inclusive", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        number: {
+          type: "number",
+          name: "Number",
+          min: ["[", 1],
         },
-        required: ["boolean"],
       },
-      {},
-      {}
-    );
+      required: ["number"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = -1;
+    expect(state).toEqual({ number: -1 });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = 1;
+    expect(state).toEqual({ number: 1 });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.number = 2;
+    expect(state).toEqual({ number: 2 });
+    expect(schema.safeParse(state).success).toBe(true);
+  });
+
+  it("supports min exclusive", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        number: {
+          type: "number",
+          name: "Number",
+          min: ["(", 1],
+        },
+      },
+      required: ["number"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = -1;
+    expect(state).toEqual({ number: -1 });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = 1;
+    expect(state).toEqual({ number: 1 });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = 2;
+    expect(state).toEqual({ number: 2 });
+    expect(schema.safeParse(state).success).toBe(true);
+  });
+
+  it("supports max inclusive", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        number: {
+          type: "number",
+          name: "Number",
+          max: ["]", 1],
+        },
+      },
+      required: ["number"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = -1;
+    expect(state).toEqual({ number: -1 });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.number = 1;
+    expect(state).toEqual({ number: 1 });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.number = 2;
+    expect(state).toEqual({ number: 2 });
+    expect(schema.safeParse(state).success).toBe(false);
+  });
+
+  it("supports max exclusive", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        number: {
+          type: "number",
+          name: "Number",
+          max: [")", 1],
+        },
+      },
+      required: ["number"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = -1;
+    expect(state).toEqual({ number: -1 });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.number = 1;
+    expect(state).toEqual({ number: 1 });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = 2;
+    expect(state).toEqual({ number: 2 });
+    expect(schema.safeParse(state).success).toBe(false);
+  });
+
+  it("supports max multiple of", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        number: {
+          type: "number",
+          name: "Number",
+          multipleOf: 2,
+        },
+      },
+      required: ["number"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = -1;
+    expect(state).toEqual({ number: -1 });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = 1;
+    expect(state).toEqual({ number: 1 });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.number = 2;
+    expect(state).toEqual({ number: 2 });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.number = 64;
+    expect(state).toEqual({ number: 64 });
+    expect(schema.safeParse(state).success).toBe(true);
+  });
+
+  it("supports boolean", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        boolean: {
+          type: "boolean",
+          name: "Boolean",
+        },
+      },
+      required: ["boolean"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -614,20 +708,20 @@ describe("fields", () => {
   });
 
   it("supports array", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          array: {
-            type: "array",
-            data: "number",
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        array: {
+          type: "array",
+          name: "Array",
+          items: {
+            type: "number",
+            name: "Number",
           },
         },
-        required: ["array"],
       },
-      {},
-      {}
-    );
+      required: ["array"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -641,21 +735,209 @@ describe("fields", () => {
     expect(schema.safeParse(state).success).toBe(true);
   });
 
-  it("supports null", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          null: {
-            type: "null",
-            data: ["number", "string"],
+  it("supports min and max items in array", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        array: {
+          type: "array",
+          name: "Array",
+          items: {
+            type: "number",
+            name: "Number",
           },
+          minItems: 1,
+          maxItems: 3,
         },
-        required: ["null"],
       },
-      {},
-      {}
-    );
+      required: ["array"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.array = [23];
+    expect(state).toEqual({ array: [23] });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.array = [23, 42, 64];
+    expect(state).toEqual({ array: [23, 42, 64] });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.array = [23, 42, 64, 123];
+    expect(state).toEqual({ array: [23, 42, 64, 123] });
+    expect(schema.safeParse(state).success).toBe(false);
+  });
+
+  it("supports array length", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        array: {
+          type: "array",
+          name: "Array",
+          items: {
+            type: "number",
+            name: "Number",
+          },
+          length: 3,
+        },
+      },
+      required: ["array"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.array = [23];
+    expect(state).toEqual({ array: [23] });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.array = [23, 42, 64];
+    expect(state).toEqual({ array: [23, 42, 64] });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.array = [23, 42, 64, 123];
+    expect(state).toEqual({ array: [23, 42, 64, 123] });
+    expect(schema.safeParse(state).success).toBe(false);
+  });
+
+  it("supports nonempty array", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        array: {
+          type: "array",
+          name: "Array",
+          items: {
+            type: "number",
+            name: "Number",
+          },
+          nonempty: true,
+        },
+      },
+      required: ["array"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.array = [23];
+    expect(state).toEqual({ array: [23] });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.array = [];
+    expect(state).toEqual({ array: [] });
+    expect(schema.safeParse(state).success).toBe(false);
+  });
+
+  it("exits array if items are not valid", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        array: {
+          type: "array",
+          name: "Array",
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          items: "blah" as any,
+        },
+      },
+      required: ["array"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.array = "";
+    expect(state).toEqual({ array: "" });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.array = [42];
+    expect(state).toEqual({ array: [42] });
+    expect(schema.safeParse(state).success).toBe(true);
+  });
+
+  it("supports tuple", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        tuple: {
+          type: "tuple",
+          name: "Tuple",
+          items: [
+            {
+              type: "number",
+              name: "Number",
+            },
+            {
+              type: "string",
+              name: "String",
+            },
+          ],
+        },
+      },
+      required: ["tuple"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.tuple = [23];
+    expect(state).toEqual({ tuple: [23] });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.tuple = [23, "test"];
+    expect(state).toEqual({ tuple: [23, "test"] });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.tuple = [23, "test", 42];
+    expect(state).toEqual({ tuple: [23, "test", 42] });
+    expect(schema.safeParse(state).success).toBe(false);
+  });
+
+  it("exits tuple if items are not valid", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        tuple: {
+          type: "tuple",
+          name: "Tuple",
+          items: [
+            {
+              type: "number",
+              name: "Number",
+            },
+            "blah",
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          ] as any,
+        },
+      },
+      required: ["tuple"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.tuple = "";
+    expect(state).toEqual({ tuple: "" });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.tuple = [42];
+    expect(state).toEqual({ tuple: [42] });
+    expect(schema.safeParse(state).success).toBe(true);
+  });
+
+  it("supports null", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        null: {
+          type: "null",
+          name: "Null",
+        },
+      },
+      required: ["null"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -670,20 +952,17 @@ describe("fields", () => {
   });
 
   it("supports nullable", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          string: {
-            type: "string",
-            nullable: true,
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+          nullable: true,
         },
-        required: ["string"],
       },
-      {},
-      {}
-    );
+      required: ["string"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -702,22 +981,20 @@ describe("fields", () => {
   });
 
   it("supports optional", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          string: {
-            type: "string",
-          },
-          optional: {
-            type: "string",
-          },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
         },
-        required: ["string"],
+        optional: {
+          type: "string",
+          name: "Optional",
+        },
       },
-      {},
-      {}
-    );
+      required: ["string"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -736,25 +1013,23 @@ describe("fields", () => {
   });
 
   it("supports sub-objects", () => {
-    const { state, schema } = form(
-      {
-        type: "object",
-        properties: {
-          object: {
-            type: "object",
-            properties: {
-              string: {
-                type: "string",
-              },
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        object: {
+          type: "object",
+          name: "Object",
+          properties: {
+            string: {
+              type: "string",
+              name: "String",
             },
-            required: ["string"],
           },
+          required: ["string"],
         },
-        required: ["object"],
       },
-      {},
-      {}
-    );
+      required: ["object"],
+    });
 
     expect(state).toEqual({});
     expect(schema.safeParse(state).success).toBe(false);
@@ -763,8 +1038,70 @@ describe("fields", () => {
     expect(state).toEqual({ object: {} });
     expect(schema.safeParse(state).success).toBe(false);
 
-    state.object = { string: 'test' };
-    expect(state).toEqual({ object: { string: 'test'} });
+    state.object = { string: "test" };
+    expect(state).toEqual({ object: { string: "test" } });
+    expect(schema.safeParse(state).success).toBe(true);
+  });
+
+  it("supports pattern properties", () => {
+    const { state, schema } = form({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+        },
+      },
+      patternProperties: {
+        "^[0-9]{3}$": {
+          type: "number",
+          name: "Number",
+        },
+        "^[a-z]{3}$": {
+          type: "string",
+          name: "String",
+        },
+        something: {
+          type: "hr",
+        },
+      },
+      required: ["string"],
+    });
+
+    expect(state).toEqual({});
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.string = 123;
+    expect(state).toEqual({ string: 123 });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.string = "test";
+    expect(state).toEqual({ string: "test" });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state["123"] = "test";
+    expect(state).toEqual({ string: "test", "123": "test" });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state["123"] = 99;
+    expect(state).toEqual({ string: "test", "123": 99 });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.abc = 99;
+    expect(state).toEqual({ string: "test", "123": 99, abc: 99 });
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.abc = "test";
+    expect(state).toEqual({ string: "test", "123": 99, abc: "test" });
+    expect(schema.safeParse(state).success).toBe(true);
+
+    state.something = "test";
+    expect(state).toEqual({
+      string: "test",
+      "123": 99,
+      abc: "test",
+      something: "test",
+    });
     expect(schema.safeParse(state).success).toBe(true);
   });
 });
