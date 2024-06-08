@@ -122,6 +122,7 @@ export type SchemaField =
       /**
        * A set of valid values for the input.
        */
+      /* biome-ignore lint/suspicious/noExplicitAny: */
       enum?: any[];
       /**
        * The minimum length of the input.
@@ -143,7 +144,16 @@ export type SchemaField =
       /**
        * A specific format of the input.
        */
-      format?: "uuid" | "email" | "ip" | "url" | "date" | "datetime" | "time";
+      format?:
+        | "uuid"
+        | "email"
+        | "ip"
+        | "ipv4"
+        | "ipv6"
+        | "url"
+        | "date"
+        | "date-time"
+        | "time";
       /**
        * A string that the input should start with.
        */
@@ -175,11 +185,11 @@ export type SchemaField =
        * Must be greater than 9.
        * ```ts
        * {
-       *   min: ["(", 9];
+       *   minimum: ["(", 9];
        * }
        * ```
        */
-      min?: number | ["(" | "[", number];
+      minimum?: number | ["(" | "[", number];
       /**
        * The maximum value of the input. This is inclusive by default. Using a
        * tuple to specify the maximum is supported.
@@ -189,11 +199,69 @@ export type SchemaField =
        * Must be less than 10.
        * ```ts
        * {
-       *   max: [")", 10];
+       *   maximum: [")", 10];
        * }
        * ```
        */
-      max?: number | [")" | "]", number];
+      maximum?: number | [")" | "]", number];
+      /**
+       * The exclusive minimum value of the input.
+       */
+      exclusiveMinimum?: number;
+      /**
+       * The exclusive maximum value of the input.
+       */
+      exclusiveMaximum?: number;
+      /**
+       * A number that the input should be a multiple of.
+       */
+      multipleOf?: number;
+    }>
+  | SchemaFieldType<{
+      /**
+       * The type of the field.
+       */
+      type: "integer";
+      /**
+       * If true, the field is nullable.
+       */
+      nullable?: boolean;
+      /**
+       * The minimum value of the input. This is inclusive. Using a tuple to
+       * specify the minimum is supported.
+       *
+       * @example
+       *
+       * Must be greater than 9.
+       * ```ts
+       * {
+       *   minimum: ["(", 9];
+       * }
+       * ```
+       */
+      minimum?: number | ["(" | "[", number];
+      /**
+       * The maximum value of the input. This is inclusive by default. Using a
+       * tuple to specify the maximum is supported.
+       *
+       * @example
+       *
+       * Must be less than 10.
+       * ```ts
+       * {
+       *   maximum: [")", 10];
+       * }
+       * ```
+       */
+      maximum?: number | [")" | "]", number];
+      /**
+       * The exclusive minimum value of the input.
+       */
+      exclusiveMinimum?: number;
+      /**
+       * The exclusive maximum value of the input.
+       */
+      exclusiveMaximum?: number;
       /**
        * A number that the input should be a multiple of.
        */
@@ -239,6 +307,10 @@ export type SchemaField =
        * If true, the array must have at least one item.
        */
       nonempty?: boolean;
+      /**
+       * If true, the array items must be unique.
+       */
+      uniqueItems?: boolean;
     }>
   | SchemaFieldType<{
       /**
@@ -308,18 +380,25 @@ export type SchemaField =
  * The return type of the schema. This is for internal use only.
  */
 export type SchemaReturnType =
+  /* biome-ignore lint/suspicious/noExplicitAny: */
   | z.ZodObject<Record<string, any>>
+  /* biome-ignore lint/suspicious/noExplicitAny: */
   | z.ZodRecord<z.ZodString, any>
   | z.ZodString
   | z.ZodDate
   | z.ZodEnum<[string, ...string[]]>
   | z.ZodNumber
   | z.ZodBoolean
+  /* biome-ignore lint/suspicious/noExplicitAny: */
   | z.ZodArray<any>
+  /* biome-ignore lint/suspicious/noExplicitAny: */
   | z.ZodArray<any, "atleastone">
+  /* biome-ignore lint/suspicious/noExplicitAny: */
   | z.ZodTuple<any>
   | z.ZodNull
+  /* biome-ignore lint/suspicious/noExplicitAny: */
   | z.ZodNullable<any>
+  /* biome-ignore lint/suspicious/noExplicitAny: */
   | z.ZodOptional<any>
   | undefined;
 
@@ -331,6 +410,7 @@ function generateSchema(
   let _schema: SchemaReturnType = undefined;
 
   if (schema.type === "object") {
+    /* biome-ignore lint/suspicious/noExplicitAny: */
     const shape: Record<string, any> = {};
 
     if (typeof schema.properties === "object") {
@@ -399,6 +479,7 @@ function generateSchema(
 
                 return pass;
               })
+              /* biome-ignore lint/suspicious/noExplicitAny: */
             ) as unknown as z.ZodObject<Record<string, any>>)
         : z.object(shape, {
             invalid_type_error: `${computedName} must be an object.`,
@@ -431,9 +512,19 @@ function generateSchema(
       _schema = _schema.ip({
         message: `${schema.name} must be a valid IP address.`,
       });
-    } else if (schema.format === "datetime") {
+    } else if (schema.format === "ipv4") {
+      _schema = _schema.ip({
+        version: "v4",
+        message: `${schema.name} must be a valid IPv4 address.`,
+      });
+    } else if (schema.format === "ipv6") {
+      _schema = _schema.ip({
+        version: "v6",
+        message: `${schema.name} must be a valid IPv6 address.`,
+      });
+    } else if (schema.format === "date-time") {
       _schema = _schema.datetime({
-        message: `${schema.name} must be a valid datetime.`,
+        message: `${schema.name} must be a valid date-time.`,
       });
     } else if (schema.format === "time") {
       _schema = _schema.time({
@@ -459,7 +550,7 @@ function generateSchema(
 
     if (typeof schema.length === "number") {
       _schema = _schema.length(schema.length, {
-        message: `${schema.name} must be ` + `${schema.length} characters.`,
+        message: `${schema.name} must be ${schema.length} characters long.`,
       });
     }
 
@@ -471,19 +562,19 @@ function generateSchema(
 
     if (schema.includes) {
       _schema = _schema.includes(schema.includes, {
-        message: `${schema.name} must include ` + `"${schema.includes}".`,
+        message: `${schema.name} must include "${schema.includes}".`,
       });
     }
 
     if (schema.startsWith) {
       _schema = _schema.startsWith(schema.startsWith, {
-        message: `${schema.name} must start with ` + `"${schema.startsWith}".`,
+        message: `${schema.name} must start with "${schema.startsWith}".`,
       });
     }
 
     if (schema.endsWith) {
       _schema = _schema.endsWith(schema.endsWith, {
-        message: `${schema.name} must end with ` + `"${schema.endsWith}".`,
+        message: `${schema.name} must end with "${schema.endsWith}".`,
       });
     }
 
@@ -495,46 +586,65 @@ function generateSchema(
         required_error: `${schema.name} is not a valid option.`,
       });
     }
-  } else if (schema.type === "number") {
-    _schema = z.number({
-      invalid_type_error: `${schema.name} must be a number.`,
-      required_error: `${schema.name} is required.`,
-    });
-
-    if (typeof schema.min === "number") {
-      _schema = _schema.min(schema.min, {
-        message: `${schema.name} must be at least ` + `${schema.min}.`,
+  } else if (schema.type === "number" || schema.type === "integer") {
+    if (schema.type === "integer") {
+      _schema = z
+        .number({
+          invalid_type_error: `${schema.name} must be an integer.`,
+          required_error: `${schema.name} is required.`,
+        })
+        .int();
+    } else {
+      _schema = z.number({
+        invalid_type_error: `${schema.name} must be a number.`,
+        required_error: `${schema.name} is required.`,
       });
-    } else if (Array.isArray(schema.min) && schema.min.length === 2) {
-      if (schema.min[0] === "(") {
-        _schema = _schema.gt(schema.min[1], {
-          message: `${schema.name} must be greater than ` + `${schema.min[1]}.`,
-        });
-      } else if (schema.min[0] === "[") {
-        _schema = _schema.gte(schema.min[1], {
-          message:
-            `${schema.name} must be greater than or equal to ` +
-            `${schema.min[1]}.`,
-        });
-      }
     }
 
-    if (typeof schema.max === "number") {
-      _schema = _schema.max(schema.max, {
-        message: `${schema.name} must be less than ` + `${schema.max}.`,
+    if (typeof schema.minimum === "number") {
+      _schema = _schema.min(schema.minimum, {
+        message: `${schema.name} must be at least ` + `${schema.minimum}.`,
       });
-    } else if (Array.isArray(schema.max) && schema.max.length === 2) {
-      if (schema.max[0] === ")") {
-        _schema = _schema.lt(schema.max[1], {
-          message: `${schema.name} must be less than ` + `${schema.max[1]}.`,
-        });
-      } else if (schema.max[0] === "]") {
-        _schema = _schema.lte(schema.max[1], {
+    } else if (Array.isArray(schema.minimum) && schema.minimum.length === 2) {
+      if (schema.minimum[0] === "(") {
+        _schema = _schema.gt(schema.minimum[1], {
           message:
-            `${schema.name} must be less than or equal to ` +
-            `${schema.max[1]}.`,
+            `${schema.name} must be greater than ` + `${schema.minimum[1]}.`,
+        });
+      } else if (schema.minimum[0] === "[") {
+        _schema = _schema.gte(schema.minimum[1], {
+          message:
+            `${schema.name} must be greater than or equal to ` +
+            `${schema.minimum[1]}.`,
         });
       }
+    } else if (typeof schema.exclusiveMinimum === "number") {
+      _schema = _schema.gt(schema.exclusiveMinimum, {
+        message: `${schema.name} must be greater than ${schema.exclusiveMinimum}.`,
+      });
+    }
+
+    if (typeof schema.maximum === "number") {
+      _schema = _schema.max(schema.maximum, {
+        message: `${schema.name} must be less than ` + `${schema.maximum}.`,
+      });
+    } else if (Array.isArray(schema.maximum) && schema.maximum.length === 2) {
+      if (schema.maximum[0] === ")") {
+        _schema = _schema.lt(schema.maximum[1], {
+          message:
+            `${schema.name} must be less than ` + `${schema.maximum[1]}.`,
+        });
+      } else if (schema.maximum[0] === "]") {
+        _schema = _schema.lte(schema.maximum[1], {
+          message:
+            `${schema.name} must be less than or equal to ` +
+            `${schema.maximum[1]}.`,
+        });
+      }
+    } else if (typeof schema.exclusiveMaximum === "number") {
+      _schema = _schema.lt(schema.exclusiveMaximum, {
+        message: `${schema.name} must be less than ${schema.exclusiveMaximum}.`,
+      });
     }
 
     if (typeof schema.multipleOf === "number") {
@@ -561,30 +671,45 @@ function generateSchema(
 
     if (typeof schema.minItems === "number") {
       _schema = _schema.min(schema.minItems, {
-        message:
-          `${schema.name} must have at least ` + `${schema.minItems} items.`,
+        message: `${schema.name} must have at least ${schema.minItems} items.`,
       });
     }
 
     if (typeof schema.maxItems === "number") {
       _schema = _schema.max(schema.maxItems, {
-        message:
-          `${schema.name} must have less than ` + `${schema.maxItems} items.`,
+        message: `${schema.name} must have less than ${schema.maxItems} items.`,
       });
     }
 
     if (typeof schema.length === "number") {
       _schema = _schema.length(schema.length, {
-        message: `${schema.name} must have ` + `${schema.length} items.`,
+        message: `${schema.name} must have ${schema.length} items.`,
       });
     }
 
     if (schema.nonempty === true) {
-      _schema = _schema.nonempty();
+      _schema = _schema.nonempty(`${schema.name} must not be empty.`);
+    }
+
+    if (schema.uniqueItems === true) {
+      _schema = _schema.pipe(
+        z.custom(
+          (value) => {
+            const unique = new Set(value);
+
+            return value.length === unique.size;
+          },
+          {
+            message: `${schema.name} must be unique.`,
+          }
+        )
+        /* biome-ignore lint/suspicious/noExplicitAny: */
+      ) as unknown as z.ZodArray<any, "many">;
     }
   } else if (schema.type === "tuple") {
     const subschema = schema.items.map((item) => generateSchema(item)) as
       | []
+      /* biome-ignore lint/suspicious/noExplicitAny: */
       | [z.ZodType<any>, ...z.ZodType<any>[]];
 
     if (subschema.some((item) => typeof item === "undefined")) {
@@ -647,7 +772,7 @@ export type FormReturnType = {
  * - `reset`: Reset the form to its default values.
  */
 /* biome-ignore lint/suspicious/noExplicitAny: */
-export function form<T = Record<string, any>>(
+export function createForm<T = Record<string, any>>(
   schema: Schema,
   /* biome-ignore lint/suspicious/noExplicitAny: */
   state?: any,
@@ -660,6 +785,7 @@ export function form<T = Record<string, any>>(
     impl: {} as T,
   }
 ): FormReturnType & T {
+  /* biome-ignore lint/style/noParameterAssign: */
   state ??= {};
 
   const _options = {
@@ -668,9 +794,6 @@ export function form<T = Record<string, any>>(
     ...options,
   };
 
-  /**
-   * Reset the form to its default values.
-   */
   function reset() {
     for (const key in state) {
       if (typeof _options.defaults[key] === "undefined") {
@@ -705,8 +828,11 @@ export function form<T = Record<string, any>>(
      * A Zod schema for the input.
      */
     schema: generateSchema(schema),
+    /**
+     * Reset the form to its default values.
+     */
     reset,
   } as FormReturnType & T;
 }
 
-export default form;
+export default createForm;
