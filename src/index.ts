@@ -1,4 +1,6 @@
 import { z } from "zod";
+export * from "./reform"
+export { default as deep } from "./deep";
 
 /**
  * A generator type used for narrowing. This is for internal use only.
@@ -13,6 +15,10 @@ export type SchemaFieldType<T extends Record<string, any>> = {
    * The description of the field.
    */
   description?: string;
+  /**
+   * A comment for the field.
+   */
+  $comment?: string;
   /**
    * Attributes for arbitrary functionality that may not be universally
    * supported. Functionality available in this library is limited to
@@ -48,6 +54,10 @@ export type Schema = Record<string, any> & {
    * The optional description of the schema.
    */
   description?: string;
+  /**
+   * A comment for the schema.
+   */
+  $comment?: string;
   /**
    * The optional
    * {@link https://www.iso.org/iso-8601-date-and-time-format.html|ISO 8601}
