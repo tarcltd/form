@@ -1,39 +1,5 @@
 import { type createForm, deep } from "./index";
-
-/**
- * An object definition of handling for key output of reForm.
- */
-export type ReFormKeyMapObject = {
-  /**
-   * The path to the key value.
-   */
-  path?: string;
-  /**
-   * Transform a key to a different key.
-   *
-   * @param key - The key to transform.
-   * @returns The transformed key.
-   */
-  transform?: (
-    value: string,
-    context: {
-      key: string;
-      path: string;
-      state: ReturnType<typeof createForm>["state"];
-      input: ReturnType<typeof createForm>["input"];
-    }
-  ) => string;
-};
-
-/**
- * A mapping for key output of reForm.
- */
-export type ReFormKeyMap = Partial<{
-  [key: keyof ReturnType<typeof createForm>["state"]]:
-    | string // an explicit path override
-    | ReFormKeyMapObject
-    | undefined;
-}>;
+import type { ReFormKeyMap, ReFormKeyMapObject } from "./types";
 
 /**
  * Reformat a form with paths and transforms or explicit reassignments.

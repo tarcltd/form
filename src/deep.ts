@@ -7,7 +7,7 @@
  * @param val - The value to set.
  * @returns The updated object.
  */
-export default function deep<T = unknown>(
+export function deep<T = unknown>(
   /* biome-ignore lint/suspicious/noExplicitAny: */
   obj: Record<string, any>,
   path: string,

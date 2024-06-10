@@ -8,6 +8,7 @@ describe("default", () => {
         properties: {
           string: {
             type: "string",
+            name: "String",
             enum: ["test"],
           },
         },
@@ -30,6 +31,7 @@ describe("default", () => {
         properties: {
           string: {
             type: "string",
+            name: "String",
             enum: ["test"],
             attrs: {
               default: "test",
@@ -55,6 +57,8 @@ describe("default", () => {
         properties: {
           string: {
             type: "string",
+            name: "String",
+
             enum: ["test"],
             attrs: {
               default: "banana",

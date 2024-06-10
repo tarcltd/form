@@ -8,6 +8,7 @@ describe("impl", () => {
         properties: {
           string: {
             type: "string",
+            name: "String",
             enum: ["test"],
           },
         },
