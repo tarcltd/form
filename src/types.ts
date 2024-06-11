@@ -70,7 +70,7 @@ export type Schema = Record<string, any> & {
   /**
    * The properties of the object.
    */
-  properties: Record<string, SchemaField>;
+  properties: Record<string, SchemaField | SchemaContentful | SchemaHr>;
   /**
    * The required fields of the schema.
    */
@@ -93,7 +93,7 @@ export type SchemaObject = SchemaFieldType<{
   /**
    * The properties of the object.
    */
-  properties?: Record<string, SchemaField>;
+  properties?: Record<string, SchemaField | SchemaContentful | SchemaHr>;
   /**
    * A definition of keys that match a pattern that should validate with a
    * specified `SchemaField` definition.
