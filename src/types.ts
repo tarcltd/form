@@ -134,8 +134,11 @@ export type SchemaString = SchemaFieldType<{
   /**
    * A set of valid values for the input.
    */
-  /* biome-ignore lint/suspicious/noExplicitAny: */
-  enum?: any[];
+  enum?: string[];
+   /**
+   * A set of invalid values for the input.
+   */
+  exclusiveEnum?: string[];
   /**
    * The minimum length of the input.
    */
@@ -150,7 +153,9 @@ export type SchemaString = SchemaFieldType<{
    */
   length?: number;
   /**
-   * A regular expression to validate the input.
+   * A regular expression string to validate the input. See 
+   * {@link https://json-schema.org/understanding-json-schema/reference/regular_expressions|JSON Schema Regular Expressions} 
+   * for more information.
    */
   pattern?: string;
   /**
@@ -163,9 +168,8 @@ export type SchemaString = SchemaFieldType<{
     | "ipv4"
     | "ipv6"
     | "url"
-    | "date"
-    | "date-time"
-    | "time";
+    | "time"
+    | "base64";
   /**
    * A string that the input should start with.
    */
@@ -175,9 +179,65 @@ export type SchemaString = SchemaFieldType<{
    */
   endsWith?: string;
   /**
-   * A string that should be included in the input.
+   * A string or list of strings that should be included in the input.
    */
-  includes?: string;
+  includes?: string | string[];
+  /**
+   * A string or list of strings that should not be included in the input.
+   */
+  excludes?: string | string[];
+}>;
+
+/**
+ * A date field definition.
+ */
+export type SchemaStringDate = SchemaFieldType<{
+  /**
+   * The type of the field.
+   */
+  type: "string";
+  /**
+   * If true, the field is nullable.
+   */
+  nullable?: boolean;
+  /**
+   * The minimum date of the input.
+   */
+  minimum?: string;
+  /**
+   * The maximum date of the input.
+   */
+  maximum?: string;
+  /**
+   * A specific format of the input.
+   */
+  format: "date";
+}>;
+
+/**
+ * A datetime field definition.
+ */
+export type SchemaStringDatetime = SchemaFieldType<{
+  /**
+   * The type of the field.
+   */
+  type: "string";
+  /**
+   * If true, the field is nullable.
+   */
+  nullable?: boolean;
+  /**
+   * The minimum date or date-time of the input.
+   */
+  minimum?: string;
+  /**
+   * The maximum date or date-time of the input.
+   */
+  maximum?: string;
+  /**
+   * A specific format of the input.
+   */
+  format: "date-time";
 }>;
 
 export type SchemaNumber = SchemaFieldType<{
@@ -423,6 +483,8 @@ export type SchemaHr = {
 export type SchemaField =
   | SchemaObject
   | SchemaString
+  | SchemaStringDate
+  | SchemaStringDatetime
   | SchemaNumber
   | SchemaInteger
   | SchemaBoolean

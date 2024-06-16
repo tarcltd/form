@@ -1,6 +1,6 @@
 {
   "name": "@tarcltd/form",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Create a JS object for use in form UI, Zod schema, and various utilities, from a simple JSON object.",
   "scripts": {
     "install": "tsx scripts/reversion.ts",
@@ -20,7 +20,7 @@
     "@types/node": "^20.14.2",
     "@vitest/coverage-v8": "^1.6.0",
     "jsr": "^0.12.4",
-    "tsx": "^4.15.2",
+    "tsx": "^4.15.5",
     "vitest": "^1.6.0"
   }
 }

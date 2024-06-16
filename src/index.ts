@@ -99,6 +99,49 @@ function generateSchema(
       invalid_type_error: `${schema.name} must be a valid date.`,
       required_error: `${schema.name} is required.`,
     });
+
+    if (typeof schema.minimum === "string") {
+      _schema = _schema.min(new Date(schema.minimum), {
+        message: `${schema.name} must be at least ${schema.minimum}.`,
+      });
+    }
+
+    if (typeof schema.maximum === "string") {
+      _schema = _schema.max(new Date(schema.maximum), {
+        message: `${schema.name} must be less than ${schema.maximum}.`,
+      });
+    }
+  } else if (schema.type === "string" && schema.format === "date-time") {
+    _schema = z
+      .string({
+        invalid_type_error: `${schema.name} must be a string.`,
+        required_error: `${schema.name} is required.`,
+      })
+      .datetime({
+        message: `${schema.name} must be a valid date-time.`,
+      });
+
+    if (typeof schema.minimum === "string") {
+      _schema = _schema.pipe(
+        z.custom(
+          (value) => new Date(value) >= new Date(schema.minimum as string),
+          {
+            message: `${schema.name} must be at least ${schema.minimum}.`,
+          }
+        )
+      ) as unknown as z.ZodString;
+    }
+
+    if (typeof schema.maximum === "string") {
+      _schema = _schema.pipe(
+        z.custom(
+          (value) => new Date(value) <= new Date(schema.maximum as string),
+          {
+            message: `${schema.name} must be less than ${schema.maximum}.`,
+          }
+        )
+      ) as unknown as z.ZodString;
+    }
   } else if (schema.type === "string") {
     _schema = z.string({
       invalid_type_error: `${schema.name} must be a string.`,
@@ -131,13 +174,13 @@ function generateSchema(
         version: "v6",
         message: `${schema.name} must be a valid IPv6 address.`,
       });
-    } else if (schema.format === "date-time") {
-      _schema = _schema.datetime({
-        message: `${schema.name} must be a valid date-time.`,
-      });
     } else if (schema.format === "time") {
       _schema = _schema.time({
         message: `${schema.name} must be a valid time.`,
+      });
+    } else if (schema.format === "base64") {
+      _schema = _schema.base64({
+        message: `${schema.name} must be a valid base64 string.`,
       });
     }
 
@@ -169,10 +212,40 @@ function generateSchema(
       });
     }
 
-    if (schema.includes) {
+    if (typeof schema.includes === "string") {
       _schema = _schema.includes(schema.includes, {
         message: `${schema.name} must include "${schema.includes}".`,
       });
+    } else if (Array.isArray(schema.includes)) {
+      for (const item of schema.includes) {
+        _schema = _schema.includes(item, {
+          message: `${schema.name} must include "${item}".`,
+        });
+      }
+    }
+
+    if (typeof schema.excludes === "string") {
+      _schema = _schema.pipe(
+        z.custom(
+          (value) =>
+            typeof value !== "string" ||
+            !value.includes(schema.excludes as string),
+          {
+            message: `${schema.name} must not include "${schema.excludes}".`,
+          }
+        )
+      ) as unknown as z.ZodString;
+    } else if (Array.isArray(schema.excludes)) {
+      for (const item of schema.excludes) {
+        _schema = _schema.pipe(
+          z.custom(
+            (value) => typeof value !== "string" || !value.includes(item),
+            {
+              message: `${schema.name} must not include "${schema.excludes}".`,
+            }
+          )
+        ) as unknown as z.ZodString;
+      }
     }
 
     if (schema.startsWith) {
@@ -193,7 +266,21 @@ function generateSchema(
       _schema = z.enum(enumValues as [string, ...string[]], {
         invalid_type_error: `${schema.name} is not a valid option.`,
         required_error: `${schema.name} is not a valid option.`,
+        message: `${schema.name} is not a valid option.`,
       });
+    }
+
+    if (Array.isArray(schema.exclusiveEnum) && schema.exclusiveEnum.length > 0) {
+      const enumValues: ReadonlyArray<string> = [...schema.exclusiveEnum];
+
+      _schema = _schema.pipe(
+        z.custom(
+          (value) => !enumValues.includes(value),
+          {
+            message: `${schema.name} is not a valid option.`,
+          }
+        )
+      ) as unknown as z.ZodString;
     }
   } else if (schema.type === "number" || schema.type === "integer") {
     if (schema.type === "integer") {

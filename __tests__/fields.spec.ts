@@ -196,6 +196,39 @@ describe("fields", () => {
       expect(schema.safeParse(state).success).toBe(true);
     });
 
+    it("supports exclusive enum", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          string: {
+            type: "string",
+            name: "String",
+            exclusiveEnum: ["a", "b", "c"],
+          },
+        },
+        required: ["string"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "d";
+      expect(state).toEqual({ string: "d" });
+      expect(schema.safeParse(state).success).toBe(true);
+
+      state.string = "a";
+      expect(state).toEqual({ string: "a" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "b";
+      expect(state).toEqual({ string: "b" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "c";
+      expect(state).toEqual({ string: "c" });
+      expect(schema.safeParse(state).success).toBe(false);
+    });
+
     it("supports pattern", () => {
       const { state, schema } = form({
         type: "object",
@@ -243,6 +276,89 @@ describe("fields", () => {
 
       state.string = "some test value";
       expect(state).toEqual({ string: "some test value" });
+      expect(schema.safeParse(state).success).toBe(true);
+    });
+
+    it("supports includes array", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          string: {
+            type: "string",
+            name: "String",
+            includes: ["test", "value"],
+          },
+        },
+        required: ["string"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "some value";
+      expect(state).toEqual({ string: "some value" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "some test";
+      expect(state).toEqual({ string: "some test" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "some test value";
+      expect(state).toEqual({ string: "some test value" });
+      expect(schema.safeParse(state).success).toBe(true);
+    });
+
+    it("supports excludes", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          string: {
+            type: "string",
+            name: "String",
+            excludes: "test",
+          },
+        },
+        required: ["string"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "some value";
+      expect(state).toEqual({ string: "some value" });
+      expect(schema.safeParse(state).success).toBe(true);
+
+      state.string = "some test value";
+      expect(state).toEqual({ string: "some test value" });
+      expect(schema.safeParse(state).success).toBe(false);
+    });
+
+    it("supports excludes array", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          string: {
+            type: "string",
+            name: "String",
+            excludes: ["test", "value"],
+          },
+        },
+        required: ["string"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "some value";
+      expect(state).toEqual({ string: "some value" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "some test";
+      expect(state).toEqual({ string: "some test" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.string = "some";
+      expect(state).toEqual({ string: "some" });
       expect(schema.safeParse(state).success).toBe(true);
     });
 
@@ -483,6 +599,41 @@ describe("fields", () => {
       expect(schema.safeParse(state).success).toBe(true);
     });
 
+    it("supports date with minimum and maximum", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            name: "Date",
+            format: "date",
+            minimum: "2024-08-01",
+            maximum: "2024-08-31",
+          },
+        },
+        required: ["date"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "07/30/24";
+      expect(state).toEqual({ date: "07/30/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "08/01/24";
+      expect(state).toEqual({ date: "08/01/24" });
+      expect(schema.safeParse(state).success).toBe(true);
+
+      state.date = "08/31/24";
+      expect(state).toEqual({ date: "08/31/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "09/01/24";
+      expect(state).toEqual({ date: "09/01/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+    });
+
     it("supports date-time", () => {
       const { state, schema } = form({
         type: "object",
@@ -506,6 +657,41 @@ describe("fields", () => {
       state.datetime = "2024-08-01T12:00:00Z";
       expect(state).toEqual({ datetime: "2024-08-01T12:00:00Z" });
       expect(schema.safeParse(state).success).toBe(true);
+    });
+
+    it("supports date-time with minimum and maximum", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          datetime: {
+            type: "string",
+            name: "Datetime",
+            format: "date-time",
+            minimum: "2024-08-01",
+            maximum: "2024-08-31",
+          },
+        },
+        required: ["datetime"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.datetime = "2024-07-30T12:00:00Z";
+      expect(state).toEqual({ datetime: "2024-07-30T12:00:00Z" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.datetime = "2024-08-01T12:00:00Z";
+      expect(state).toEqual({ datetime: "2024-08-01T12:00:00Z" });
+      expect(schema.safeParse(state).success).toBe(true);
+
+      state.datetime = "2024-08-31T12:00:00Z";
+      expect(state).toEqual({ datetime: "2024-08-31T12:00:00Z" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.datetime = "2024-09-01T12:00:00Z";
+      expect(state).toEqual({ datetime: "2024-09-01T12:00:00Z" });
+      expect(schema.safeParse(state).success).toBe(false);
     });
 
     it("supports time", () => {
@@ -539,6 +725,31 @@ describe("fields", () => {
       state.time = "25:59:59";
       expect(state).toEqual({ time: "25:59:59" });
       expect(schema.safeParse(state).success).toBe(false);
+    });
+
+    it("supports base64", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          base64: {
+            type: "string",
+            name: "Base64",
+            format: "base64",
+          },
+        },
+        required: ["base64"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.base64 = "123";
+      expect(state).toEqual({ base64: "123" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.base64 = Buffer.from("test").toString("base64");
+      expect(state).toEqual({ base64: "dGVzdA==" });
+      expect(schema.safeParse(state).success).toBe(true);
     });
   });
 
@@ -1263,8 +1474,8 @@ describe("fields", () => {
           array: {
             type: "array",
             name: "Array",
-              /* biome-ignore lint/suspicious/noExplicitAny: */
-              items: "blah" as any,
+            /* biome-ignore lint/suspicious/noExplicitAny: */
+            items: "blah" as any,
           },
         },
         required: ["array"],

@@ -1,4 +1,4 @@
-import deep from "../src/deep";
+import { deep } from "../src/deep";
 
 describe("deep get", () => {
   it("should get top level", () => {
@@ -43,50 +43,49 @@ describe("deep get", () => {
 });
 
 describe("deep set", () => {
-    it("should set top level", () => {
-      const obj = {};
-  
-      deep(obj, "test", "test");
-  
-      expect(obj).toEqual({ test: "test" });
-    });
-  
-    it("should set sub level", () => {
-      const obj = {};
-  
-      deep(obj, "test.another.key", "test");
-  
-      expect(obj).toEqual({
-        test: {
-          another: {
-            key: "test",
-          },
+  it("should set top level", () => {
+    const obj = {};
+
+    deep(obj, "test", "test");
+
+    expect(obj).toEqual({ test: "test" });
+  });
+
+  it("should set sub level", () => {
+    const obj = {};
+
+    deep(obj, "test.another.key", "test");
+
+    expect(obj).toEqual({
+      test: {
+        another: {
+          key: "test",
         },
-      });
-    });
-  
-    it("should set array", () => {
-      const obj = {};
-  
-      deep(obj, "test.another[0]", "test");
-  
-      expect(obj).toEqual({
-        test: {
-          another: ["test"],
-        },
-      });
-    });
-  
-    it("should set array object", () => {
-      const obj = {};
-  
-      deep(obj, "test.another[0].key", "test");
-  
-      expect(obj).toEqual({
-        test: {
-          another: [{ key: "test" }],
-        },
-      });
+      },
     });
   });
-  
+
+  it("should set array", () => {
+    const obj = {};
+
+    deep(obj, "test.another[0]", "test");
+
+    expect(obj).toEqual({
+      test: {
+        another: ["test"],
+      },
+    });
+  });
+
+  it("should set array object", () => {
+    const obj = {};
+
+    deep(obj, "test.another[0].key", "test");
+
+    expect(obj).toEqual({
+      test: {
+        another: [{ key: "test" }],
+      },
+    });
+  });
+});
