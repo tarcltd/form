@@ -1,5 +1,5 @@
 {
-  "$id": "",
+  "$id": "https://raw.githubusercontent.com/tarcltd/form/main/schema/1.0.12/schema.json",
   "$comment": "TARC Ltd. Form Version 1.0.12",
   "type": "object",
   "properties": {
