@@ -128,10 +128,6 @@ export type SchemaString = SchemaFieldType<{
    */
   type: "string";
   /**
-   * If true, the field is nullable.
-   */
-  nullable?: boolean;
-  /**
    * A set of valid values for the input.
    */
   enum?: string[];
@@ -197,10 +193,6 @@ export type SchemaStringDate = SchemaFieldType<{
    */
   type: "string";
   /**
-   * If true, the field is nullable.
-   */
-  nullable?: boolean;
-  /**
    * The minimum date of the input.
    */
   minimum?: string;
@@ -223,10 +215,6 @@ export type SchemaStringDatetime = SchemaFieldType<{
    */
   type: "string";
   /**
-   * If true, the field is nullable.
-   */
-  nullable?: boolean;
-  /**
    * The minimum date or date-time of the input.
    */
   minimum?: string;
@@ -245,10 +233,6 @@ export type SchemaNumber = SchemaFieldType<{
    * The type of the field.
    */
   type: "number";
-  /**
-   * If true, the field is nullable.
-   */
-  nullable?: boolean;
   /**
    * The minimum value of the input. This is inclusive. Using a tuple to
    * specify the minimum is supported.
@@ -300,10 +284,6 @@ export type SchemaInteger = SchemaFieldType<{
    */
   type: "integer";
   /**
-   * If true, the field is nullable.
-   */
-  nullable?: boolean;
-  /**
    * The minimum value of the input. This is inclusive. Using a tuple to
    * specify the minimum is supported.
    *
@@ -353,10 +333,6 @@ export type SchemaBoolean = SchemaFieldType<{
    * The type of the field.
    */
   type: "boolean";
-  /**
-   * If true, the field is nullable.
-   */
-  nullable?: boolean;
 }>;
 
 /**
@@ -367,10 +343,6 @@ export type SchemaArray = SchemaFieldType<{
    * The type of the field.
    */
   type: "array";
-  /**
-   * If true, the field is nullable.
-   */
-  nullable?: boolean;
   /**
    * The data type of the array items.
    */
@@ -406,10 +378,6 @@ export type SchemaTuple = SchemaFieldType<{
    * The type of the field.
    */
   type: "tuple";
-  /**
-   * If true, the field is nullable.
-   */
-  nullable?: boolean;
   /**
    * The data type of the tuple items.
    */
