@@ -12,12 +12,16 @@ describe("Conditionals", () => {
       },
       required: ["string"],
       then: {
+        type: "object",
         properties: {
-          string: {
+          other: {
             type: "string",
-            enum: ["test"],
+            name: "Other",
+            minLength: 3,
+            maxLength: 10,
           },
         },
+        required: ["other"],
       },
     });
 
@@ -56,6 +60,7 @@ describe("Conditionals", () => {
       },
       required: ["string"],
       then: {
+        type: "object",
         properties: {
           other: {
             type: "string",
@@ -111,6 +116,7 @@ describe("Conditionals", () => {
         },
       },
       then: {
+        type: "object",
         properties: {
           other: {
             type: "string",
@@ -166,6 +172,7 @@ describe("Conditionals", () => {
         },
       },
       then: {
+        type: "object",
         properties: {
           other: {
             type: "string",
@@ -235,6 +242,7 @@ describe("Conditionals", () => {
         },
       },
       then: {
+        type: "object",
         properties: {
           other: {
             type: "string",

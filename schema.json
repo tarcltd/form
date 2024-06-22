@@ -1,4 +1,5 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/tarcltd/form/main/schema.json",
   "title": "TARC Ltd. Form Schema",
   "description": "A JSON Schema definition of the TARC Ltd. Form version 1.0.12 interface.",
@@ -88,7 +89,10 @@
         "description": { "type": "string" },
         "$comment": { "type": "string" },
         "attrs": { "type": "object" },
-        "nullable": { "type": "boolean" }
+        "nullable": { "type": "boolean" },
+        "if": { "$ref": "#/definitions/schemaObject" },
+        "then": { "$ref": "#/definitions/schemaObject" },
+        "else": { "$ref": "#/definitions/schemaObject" }
       },
       "required": ["type", "name", "required"]
     },

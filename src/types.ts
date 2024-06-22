@@ -96,23 +96,11 @@ export type SchemaConditional = {
   /**
    * A definition of the object if the condition is `true`.
    */
-  then?: Omit<SchemaObject, "type"> & {
-    /**
-     * The required fields of the object. Non-required fields will be
-     * validated but marked as optional.
-     */
-    required?: string[];
-  };
+  then?: SchemaObject;
   /**
    * A definition of the object if the condition is `false`.
    */
-  else?: Omit<SchemaObject, "type"> & {
-    /**
-     * The required fields of the object. Non-required fields will be
-     * validated but marked as optional.
-     */
-    required?: string[];
-  };
+  else?: SchemaObject;
 };
 
 /**

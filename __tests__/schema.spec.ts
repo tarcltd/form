@@ -58,12 +58,25 @@ describe("Schema", () => {
           type: "object",
           properties: {
             field: {
-              type: "object",
-            },
+              type: "object"
+            }
           },
-          required: [],
-        }),
-      ).toBe(false);
+          required: []
+        })
+      ).toBe(false); // Missing 'name' property in 'field'
+
+      expect(
+        validate({
+          type: "object",
+          properties: {
+            field: {
+              type: "object",
+              name: "field"
+            }
+          },
+          required: []
+        })
+      ).toBe(false); // Missing 'required' property in 'field'
 
       expect(
         validate({
@@ -72,24 +85,11 @@ describe("Schema", () => {
             field: {
               type: "object",
               name: "field",
-            },
+              required: []
+            }
           },
-          required: [],
-        }),
-      ).toBe(false);
-
-      expect(
-        validate({
-          type: "object",
-          properties: {
-            field: {
-              type: "object",
-              name: "field",
-              required: [],
-            },
-          },
-          required: [],
-        }),
+          required: []
+        })
       ).toBe(true);
 
       expect(
@@ -100,11 +100,11 @@ describe("Schema", () => {
               type: "object",
               name: "field",
               properties: {},
-              required: [],
-            },
+              required: []
+            }
           },
-          required: [],
-        }),
+          required: []
+        })
       ).toBe(true);
 
       expect(
@@ -115,12 +115,63 @@ describe("Schema", () => {
               type: "object",
               name: "field",
               patternProperties: {},
-              required: [],
-            },
+              required: []
+            }
           },
-          required: [],
-        }),
+          required: []
+        })
       ).toBe(true);
+    });
+
+    it("should validate with if/then/else structure", () => {
+      expect(validate({
+        type: "object",
+        properties: {
+          conditionField: {
+            type: "string",
+            name: "conditionField"
+          },
+          field1: {
+            type: "string",
+            name: "field1"
+          },
+          field2: {
+            type: "string",
+            name: "field2"
+          }
+        },
+        required: ["conditionField"],
+        if: {
+          properties: {
+            conditionField: {
+              type: "string",
+              minLength: 3
+            }
+          },
+        },
+        then: {
+          type: "object",
+          properties: {
+            field1: {
+              type: "string",
+              name: "field1",
+              minLength: 5
+            }
+          },
+          required: ["field1"]
+        },
+        else: {
+          type: "object",
+          properties: {
+            field2: {
+              type: "string",
+              name: "field2",
+              minLength: 2
+            }
+          },
+          required: ["field2"]
+        }
+      })).toBe(true);
     });
   });
 
