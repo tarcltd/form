@@ -94,6 +94,54 @@ function generateSchema(
             invalid_type_error: `${computedName} must be an object.`,
             required_error: `${computedName} is required.`,
           });
+
+    if (
+      typeof schema.if === "object" &&
+      typeof schema.if.properties === "object" &&
+      typeof schema.then === "object"
+    ) {
+      const ifSchema = generateSchema({
+        ...schema.if,
+        type: "object",
+        required: Object.keys(schema.if.properties),
+      });
+      const thenSchema = generateSchema({
+        ...schema.then,
+        type: "object",
+      });
+
+      const elseSchema =
+        typeof schema.else === "object"
+          ? generateSchema({
+              ...schema.else,
+              type: "object",
+            })
+          : undefined;
+
+      _schema = _schema.passthrough().pipe(
+        z.custom(
+          (value) => {
+            if (
+              (ifSchema as z.ZodObject<Record<string, any>>).safeParse(value)
+                .success
+            ) {
+              return (thenSchema as z.ZodObject<Record<string, any>>).safeParse(
+                value
+              ).success;
+            }
+
+            if (elseSchema) {
+              return elseSchema.safeParse(value).success;
+            }
+
+            return true;
+          },
+          {
+            message: `${computedName} is missing required information.`,
+          }
+        )
+      ) as unknown as z.ZodObject<Record<string, any>>;
+    }
   } else if (schema.type === "string" && schema.format === "date") {
     _schema = z.coerce.date({
       invalid_type_error: `${schema.name} must be a valid date.`,
@@ -270,16 +318,16 @@ function generateSchema(
       });
     }
 
-    if (Array.isArray(schema.exclusiveEnum) && schema.exclusiveEnum.length > 0) {
+    if (
+      Array.isArray(schema.exclusiveEnum) &&
+      schema.exclusiveEnum.length > 0
+    ) {
       const enumValues: ReadonlyArray<string> = [...schema.exclusiveEnum];
 
       _schema = _schema.pipe(
-        z.custom(
-          (value) => !enumValues.includes(value),
-          {
-            message: `${schema.name} is not a valid option.`,
-          }
-        )
+        z.custom((value) => !enumValues.includes(value), {
+          message: `${schema.name} is not a valid option.`,
+        })
       ) as unknown as z.ZodString;
     }
   } else if (schema.type === "number" || schema.type === "integer") {

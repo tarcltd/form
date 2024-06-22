@@ -117,6 +117,23 @@ export type SchemaObject = SchemaFieldType<{
    * validated but marked as optional.
    */
   required: string[];
+  /**
+   * A conditional definition for the object.
+   */
+  if?: {
+    /**
+     * A definition for the form state to trigger the conditional.
+     */
+    properties: Record<string, Omit<SchemaField, "name">>;
+  };
+  /**
+   * A definition of the object if the conditional is true.
+   */
+  then?: Omit<SchemaObject, "type" | "required">;
+  /**
+   * A definition of the object if the conditional is false.
+   */
+  else?: Omit<SchemaObject, "type" | "required">;
 }>;
 
 /**
@@ -131,7 +148,7 @@ export type SchemaString = SchemaFieldType<{
    * A set of valid values for the input.
    */
   enum?: string[];
-   /**
+  /**
    * A set of invalid values for the input.
    */
   exclusiveEnum?: string[];
@@ -149,8 +166,8 @@ export type SchemaString = SchemaFieldType<{
    */
   length?: number;
   /**
-   * A regular expression string to validate the input. See 
-   * {@link https://json-schema.org/understanding-json-schema/reference/regular_expressions|JSON Schema Regular Expressions} 
+   * A regular expression string to validate the input. See
+   * {@link https://json-schema.org/understanding-json-schema/reference/regular_expressions|JSON Schema Regular Expressions}
    * for more information.
    */
   pattern?: string;
