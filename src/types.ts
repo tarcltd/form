@@ -82,6 +82,39 @@ export type Schema = Record<string, any> & {
   metadata?: Record<string, any>;
 };
 
+export type SchemaConditional = {
+  /**
+   * A conditional definition for the object.
+   */
+  if?: {
+    /**
+     * A definition of the form state condition. All fields in the `properties`
+     * are implicitly required to result in a `true` state.
+     */
+    properties: Record<string, Omit<SchemaField, "name">>;
+  };
+  /**
+   * A definition of the object if the condition is `true`.
+   */
+  then?: Omit<SchemaObject, "type"> & {
+    /**
+     * The required fields of the object. Non-required fields will be
+     * validated but marked as optional.
+     */
+    required?: string[];
+  };
+  /**
+   * A definition of the object if the condition is `false`.
+   */
+  else?: Omit<SchemaObject, "type"> & {
+    /**
+     * The required fields of the object. Non-required fields will be
+     * validated but marked as optional.
+     */
+    required?: string[];
+  };
+};
+
 /**
  * An object field definition.
  */
@@ -117,24 +150,8 @@ export type SchemaObject = SchemaFieldType<{
    * validated but marked as optional.
    */
   required: string[];
-  /**
-   * A conditional definition for the object.
-   */
-  if?: {
-    /**
-     * A definition for the form state to trigger the conditional.
-     */
-    properties: Record<string, Omit<SchemaField, "name">>;
-  };
-  /**
-   * A definition of the object if the conditional is true.
-   */
-  then?: Omit<SchemaObject, "type" | "required">;
-  /**
-   * A definition of the object if the conditional is false.
-   */
-  else?: Omit<SchemaObject, "type" | "required">;
-}>;
+}> &
+  SchemaConditional;
 
 /**
  * A string field definition.
@@ -513,6 +530,7 @@ export type FormReturnType = {
   /* biome-ignore lint/suspicious/noExplicitAny: */
   schema: z.ZodObject<Record<string, any>>;
   reset: () => void;
+  conditionals: Omit<SchemaObject, "name">;
 };
 
 /**
