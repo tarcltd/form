@@ -634,6 +634,111 @@ describe("fields", () => {
       expect(schema.safeParse(state).success).toBe(false);
     });
 
+    it("supports date with minimum and maximum alt", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            name: "Date",
+            format: "date",
+            minimum: ["[", "2024-08-01"],
+            maximum: ["]", "2024-08-31"],
+          },
+        },
+        required: ["date"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "07/30/24";
+      expect(state).toEqual({ date: "07/30/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "08/01/24";
+      expect(state).toEqual({ date: "08/01/24" });
+      expect(schema.safeParse(state).success).toBe(true);
+
+      state.date = "08/31/24";
+      expect(state).toEqual({ date: "08/31/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "09/01/24";
+      expect(state).toEqual({ date: "09/01/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+    });
+
+    it ("supports date with exclusive minimum and maximum", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            name: "Date",
+            format: "date",
+            exclusiveMinimum: "2024-08-01",
+            exclusiveMaximum: "2024-08-31",
+          },
+        },
+        required: ["date"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "07/30/24";
+      expect(state).toEqual({ date: "07/30/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "08/01/24";
+      expect(state).toEqual({ date: "08/01/24" });
+      expect(schema.safeParse(state).success).toBe(true);
+
+      state.date = "08/31/24";
+      expect(state).toEqual({ date: "08/31/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "09/01/24";
+      expect(state).toEqual({ date: "09/01/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+    });
+
+    it ("supports date with exclusive minimum and maximum alt", () => {
+      const { state, schema } = form({
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            name: "Date",
+            format: "date",
+            minimum: ["(", "2024-08-01"],
+            maximum: [")", "2024-08-31"],
+          },
+        },
+        required: ["date"],
+      });
+
+      expect(state).toEqual({});
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "07/30/24";
+      expect(state).toEqual({ date: "07/30/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "08/01/24";
+      expect(state).toEqual({ date: "08/01/24" });
+      expect(schema.safeParse(state).success).toBe(true);
+
+      state.date = "08/31/24";
+      expect(state).toEqual({ date: "08/31/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "09/01/24";
+      expect(state).toEqual({ date: "09/01/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+    });
+
     it("supports date-time", () => {
       const { state, schema } = form({
         type: "object",
@@ -1323,7 +1428,6 @@ describe("fields", () => {
             name: "Array",
             items: {
               type: "number",
-              name: "Number",
             },
           },
         },
@@ -1351,7 +1455,6 @@ describe("fields", () => {
             name: "Array",
             items: {
               type: "number",
-              name: "Number",
             },
             minItems: 1,
             maxItems: 3,
@@ -1385,7 +1488,6 @@ describe("fields", () => {
             name: "Array",
             items: {
               type: "number",
-              name: "Number",
             },
             length: 3,
           },
@@ -1418,7 +1520,6 @@ describe("fields", () => {
             name: "Array",
             items: {
               type: "number",
-              name: "Number",
             },
             nonempty: true,
           },
@@ -1447,7 +1548,6 @@ describe("fields", () => {
             name: "Array",
             items: {
               type: "number",
-              name: "Number",
             },
             uniqueItems: true,
           },
@@ -1482,11 +1582,11 @@ describe("fields", () => {
       });
 
       expect(state).toEqual({});
-      expect(schema.safeParse(state).success).toBe(true);
+      expect(schema.safeParse(state).success).toBe(false);
 
       state.array = "";
       expect(state).toEqual({ array: "" });
-      expect(schema.safeParse(state).success).toBe(true);
+      expect(schema.safeParse(state).success).toBe(false);
 
       state.array = [42];
       expect(state).toEqual({ array: [42] });
@@ -1505,11 +1605,9 @@ describe("fields", () => {
             items: [
               {
                 type: "number",
-                name: "Number",
               },
               {
                 type: "string",
-                name: "String",
               },
             ],
           },

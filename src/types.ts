@@ -70,7 +70,7 @@ export type Schema = Record<string, any> & {
   /**
    * The properties of the object.
    */
-  properties: Record<string, SchemaField | SchemaContentful | SchemaHr>;
+  properties: Record<string, SchemaField | SchemaUiContentful | SchemaUi>;
   /**
    * The required fields of the schema.
    */
@@ -82,6 +82,9 @@ export type Schema = Record<string, any> & {
   metadata?: Record<string, any>;
 };
 
+/**
+ * A conditional definition for a `SchemaObject`.
+ */
 export type SchemaConditional = {
   /**
    * A conditional definition for the object.
@@ -114,7 +117,7 @@ export type SchemaObject = SchemaFieldType<{
   /**
    * The properties of the object.
    */
-  properties?: Record<string, SchemaField | SchemaContentful | SchemaHr>;
+  properties?: Record<string, SchemaField | SchemaUiContentful | SchemaUi>;
   /**
    * A definition of keys that match a pattern that should validate with a
    * specified `SchemaField` definition.
@@ -204,6 +207,21 @@ export type SchemaString = SchemaFieldType<{
    * A string or list of strings that should not be included in the input.
    */
   excludes?: string | string[];
+  /**
+   * To validate against `anyOf`, the given data must be valid against any (one
+   * or more) of the given subschemas.
+   */
+  anyOf?: Omit<SchemaString, "type" | "name">[];
+  /**
+   * To validate against `allOf`, the given data must be valid against all of
+   * the given subschemas.
+   */
+  allOf?: Omit<SchemaString, "type" | "name">[];
+  /**
+   * To validate against `oneOf`, the given data must be valid against exactly
+   * one of the given subschemas.
+   */
+  oneOf?: Omit<SchemaString, "type" | "name">[];
 }>;
 
 /**
@@ -215,17 +233,60 @@ export type SchemaStringDate = SchemaFieldType<{
    */
   type: "string";
   /**
-   * The minimum date of the input.
+   * The minimum date of the input. This is inclusive by default. Using a tuple 
+   * to specify the minimum is supported.
+   * 
+   * @example
+   *
+   * Must be greater than August 1, 2024.
+   * ```ts
+   * {
+   *   minimum: ["(", "2024-08-01";]
+   * }
+   * ```
    */
-  minimum?: string;
+  minimum?: string | ["(" | "[", string];
   /**
-   * The maximum date of the input.
+   * The maximum date of the input. This is inclusive by default. Using a tuple 
+   * to specify the maximum is supported.
+   * 
+   * @example
+   *
+   * Must be less than August 31, 2024.
+   * ```ts
+   * {
+   *   maximum: [")", "2024-08-31";]
+   * }
+   * ```
    */
-  maximum?: string;
+  maximum?:   string | [")" | "]", string];
+  /**
+   * The exclusive minimum date of the input.
+   */
+  exclusiveMinimum?: string;
+  /**
+   * The exclusive maximum date of the input.
+   */
+  exclusiveMaximum?: string;
   /**
    * A specific format of the input.
    */
   format: "date";
+  /**
+   * To validate against `anyOf`, the given data must be valid against any (one
+   * or more) of the given subschemas.
+   */
+  anyOf?: Omit<SchemaStringDate, "type" | "name" | "format">[];
+  /**
+   * To validate against `allOf`, the given data must be valid against all of
+   * the given subschemas.
+   */
+  allOf?: Omit<SchemaStringDate, "type" | "name" | "format">[];
+  /**
+   * To validate against `oneOf`, the given data must be valid against exactly
+   * one of the given subschemas.
+   */
+  oneOf?: Omit<SchemaStringDate, "type" | "name" | "format">[];
 }>;
 
 /**
@@ -236,18 +297,61 @@ export type SchemaStringDatetime = SchemaFieldType<{
    * The type of the field.
    */
   type: "string";
-  /**
-   * The minimum date or date-time of the input.
+  /** 
+   * The minimum date or date-time of the input. This is inclusive by default. 
+   * Using a tuple to specify the minimum is supported.
+   * 
+   * @example
+   *
+   * Must be greater than August 1, 2024.
+   * ```ts
+   * {
+   *   minimum: ["(", "2024-08-01T12:00:00Z";]
+   * }
+   * ```
    */
-  minimum?: string;
+  minimum?: string | ["(" | "[", string];
   /**
-   * The maximum date or date-time of the input.
+   * The maximum date or date-time of the input. This is inclusive by default. 
+   * Using a tuple to specify the maximum is supported.
+   * 
+   * @example
+   *
+   * Must be less than August 31, 2024.
+   * ```ts
+   * {
+   *   maximum: [")", "2024-08-31T12:00:00Z";]
+   * }
+   * ```
    */
-  maximum?: string;
+  maximum?:   string | [")" | "]", string];
+  /**
+   * The exclusive minimum date or date-time of the input.
+   */
+  exclusiveMinimum?: string;
+  /**
+   * The exclusive maximum date or date-time of the input.
+   */
+  exclusiveMaximum?: string;
   /**
    * A specific format of the input.
    */
   format: "date-time";
+  /**
+   * To validate against `anyOf`, the given data must be valid against any (one
+   * or more) of the given subschemas.
+   */
+  anyOf?: Omit<SchemaStringDatetime, "type" | "name" | "format">[];
+  /**
+   * To validate against `allOf`, the given data must be valid against all of
+   * the given subschemas.
+   */
+  allOf?: Omit<SchemaStringDatetime, "type" | "name" | "format">[];
+  /**
+   * To validate against `oneOf`, the given data must be valid against exactly
+   * one of the given subschemas.
+   */
+  oneOf?: Omit<SchemaStringDatetime, "type" | "name" | "format">[];
 }>;
 
 export type SchemaNumber = SchemaFieldType<{
@@ -295,6 +399,21 @@ export type SchemaNumber = SchemaFieldType<{
    * A number that the input should be a multiple of.
    */
   multipleOf?: number;
+  /**
+   * To validate against `anyOf`, the given data must be valid against any (one
+   * or more) of the given subschemas.
+   */
+  anyOf?: Omit<SchemaNumber, "type" | "name">[];
+  /**
+   * To validate against `allOf`, the given data must be valid against all of
+   * the given subschemas.
+   */
+  allOf?: Omit<SchemaNumber, "type" | "name">[];
+  /**
+   * To validate against `oneOf`, the given data must be valid against exactly
+   * one of the given subschemas.
+   */
+  oneOf?: Omit<SchemaNumber, "type" | "name">[];
 }>;
 
 /**
@@ -345,6 +464,21 @@ export type SchemaInteger = SchemaFieldType<{
    * A number that the input should be a multiple of.
    */
   multipleOf?: number;
+  /**
+   * To validate against `anyOf`, the given data must be valid against any (one
+   * or more) of the given subschemas.
+   */
+  anyOf?: Omit<SchemaInteger, "type" | "name">[];
+  /**
+   * To validate against `allOf`, the given data must be valid against all of
+   * the given subschemas.
+   */
+  allOf?: Omit<SchemaInteger, "type" | "name">[];
+  /**
+   * To validate against `oneOf`, the given data must be valid against exactly
+   * one of the given subschemas.
+   */
+  oneOf?: Omit<SchemaInteger, "type" | "name">[];
 }>;
 
 /**
@@ -368,7 +502,7 @@ export type SchemaArray = SchemaFieldType<{
   /**
    * The data type of the array items.
    */
-  items: SchemaField;
+  items?: Omit<SchemaField, "name">;
   /**
    * The minimum number of items in the array.
    */
@@ -390,6 +524,21 @@ export type SchemaArray = SchemaFieldType<{
    * If true, the array items must be unique.
    */
   uniqueItems?: boolean;
+  /**
+   * To validate against `anyOf`, the given data must be valid against any (one
+   * or more) of the given subschemas.
+   */
+  anyOf?: Omit<SchemaArray, "type" | "name">[];
+  /**
+   * To validate against `allOf`, the given data must be valid against all of
+   * the given subschemas.
+   */
+  allOf?: Omit<SchemaArray, "type" | "name">[];
+  /**
+   * To validate against `oneOf`, the given data must be valid against exactly
+   * one of the given subschemas.
+   */
+  oneOf?: Omit<SchemaArray, "type" | "name">[];
 }>;
 
 /**
@@ -403,7 +552,17 @@ export type SchemaTuple = SchemaFieldType<{
   /**
    * The data type of the tuple items.
    */
-  items: SchemaField[];
+  items?: Omit<SchemaField, "name">[];
+  /**
+   * To validate against `anyOf`, the given data must be valid against any (one
+   * or more) of the given subschemas.
+   */
+  anyOf?: Omit<SchemaTuple, "type" | "name">[];
+  /**
+   * To validate against `oneOf`, the given data must be valid against exactly
+   * one of the given subschemas.
+   */
+  oneOf?: Omit<SchemaTuple, "type" | "name">[];
 }>;
 
 /**
@@ -417,9 +576,9 @@ export type SchemaNull = SchemaFieldType<{
 }>;
 
 /**
- * A form content definition.
+ * A form UI content definition.
  */
-export type SchemaContentful = {
+export type SchemaUiContentful = {
   /**
    * The type of the field.
    */
@@ -438,7 +597,7 @@ export type SchemaContentful = {
   /**
    * The content of the item.
    */
-  content?: string;
+  content: string;
   /**
    * Attributes for arbitrary functionality that may not be universally
    * supported. Functionality available in this library is limited to
@@ -450,9 +609,9 @@ export type SchemaContentful = {
 };
 
 /**
- * A horizontal rule definition.
+ * A form UI definition.
  */
-export type SchemaHr = {
+export type SchemaUi = {
   /**
    * The type of the field.
    */

@@ -4,15 +4,18 @@ export { deep } from "./deep";
 import type {
   FormReturnType,
   Schema,
-  SchemaContentful,
+  SchemaUiContentful,
   SchemaField,
-  SchemaHr,
+  SchemaUi,
   SchemaReturnType,
+  SchemaString,
+  SchemaNumber,
+  SchemaTuple,
 } from "./types";
 export type * from "./types";
 
 function generateSchema(
-  schema: Schema | SchemaField | SchemaContentful | SchemaHr,
+  schema: Schema | SchemaField | SchemaUiContentful | SchemaUi,
   key?: string,
   required?: string[]
 ): SchemaReturnType {
@@ -142,54 +145,98 @@ function generateSchema(
         )
       ) as unknown as z.ZodObject<Record<string, any>>;
     }
-  } else if (schema.type === "string" && schema.format === "date") {
-    _schema = z.coerce.date({
-      invalid_type_error: `${schema.name} must be a valid date.`,
-      required_error: `${schema.name} is required.`,
-    });
-
-    if (typeof schema.minimum === "string") {
-      _schema = _schema.min(new Date(schema.minimum), {
-        message: `${schema.name} must be at least ${schema.minimum}.`,
-      });
+  } else if (
+    schema.type === "string" &&
+    (schema.format === "date" || schema.format === "date-time")
+  ) {
+    if (schema.format === "date-time") {
+      _schema = z
+        .string()
+        .datetime(`${schema.name} must be a valid date-time.`);
     }
 
-    if (typeof schema.maximum === "string") {
-      _schema = _schema.max(new Date(schema.maximum), {
-        message: `${schema.name} must be less than ${schema.maximum}.`,
-      });
-    }
-  } else if (schema.type === "string" && schema.format === "date-time") {
-    _schema = z
-      .string({
-        invalid_type_error: `${schema.name} must be a string.`,
-        required_error: `${schema.name} is required.`,
+    _schema = (_schema ?? z.string()).pipe(
+      z.custom((value) => {
+        let dateSchema = z.coerce.date({
+          invalid_type_error: `${schema.name} must be a valid ${schema.format}.`,
+          required_error: `${schema.name} is required.`,
+        });
+
+        if (typeof schema.minimum === "string") {
+          dateSchema = dateSchema.min(new Date(schema.minimum), {
+            message: `${schema.name} must not be before ${schema.minimum}.`,
+          });
+        } else if (
+          Array.isArray(schema.minimum) &&
+          schema.minimum.length === 2
+        ) {
+          if (schema.minimum[0] === "(") {
+            dateSchema = dateSchema.pipe(
+              z.custom(
+                (value) =>
+                  new Date(value) >=
+                  new Date((schema.minimum as [string, string])[1]),
+                {
+                  message: `${schema.name} must be after ${schema.minimum[1]}.`,
+                }
+              )
+            ) as unknown as z.ZodDate;
+          } else if (schema.minimum[0] === "[") {
+            dateSchema = dateSchema.min(new Date(schema.minimum[1]), {
+              message: `${schema.name} must not be before ${schema.minimum}.`,
+            });
+          }
+        } else if (typeof schema.exclusiveMinimum === "string") {
+          dateSchema = dateSchema.pipe(
+            z.custom(
+              (value) =>
+                new Date(value) >= new Date(schema.exclusiveMinimum as string),
+              {
+                message: `${schema.name} must be after ${schema.exclusiveMinimum}.`,
+              }
+            )
+          ) as unknown as z.ZodDate;
+        }
+
+        if (typeof schema.maximum === "string") {
+          dateSchema = dateSchema.max(new Date(schema.maximum), {
+            message: `${schema.name} must not be after ${schema.maximum}.`,
+          });
+        } else if (
+          Array.isArray(schema.maximum) &&
+          schema.maximum.length === 2
+        ) {
+          if (schema.maximum[0] === ")") {
+            dateSchema = dateSchema.pipe(
+              z.custom(
+                (value) =>
+                  new Date(value) <=
+                  new Date((schema.maximum as [string, string])[1]),
+                {
+                  message: `${schema.name} must be before ${schema.maximum[1]}.`,
+                }
+              )
+            ) as unknown as z.ZodDate;
+          } else if (schema.maximum[0] === "]") {
+            dateSchema = dateSchema.max(new Date(schema.maximum[1]), {
+              message: `${schema.name} must not be after ${schema.maximum}.`,
+            });
+          }
+        } else if (typeof schema.exclusiveMaximum === "string") {
+          dateSchema = dateSchema.pipe(
+            z.custom(
+              (value) =>
+                new Date(value) <= new Date(schema.exclusiveMaximum as string),
+              {
+                message: `${schema.name} must be before ${schema.exclusiveMaximum}.`,
+              }
+            )
+          ) as unknown as z.ZodDate;
+        }
+
+        return dateSchema.safeParse(value).success;
       })
-      .datetime({
-        message: `${schema.name} must be a valid date-time.`,
-      });
-
-    if (typeof schema.minimum === "string") {
-      _schema = _schema.pipe(
-        z.custom(
-          (value) => new Date(value) >= new Date(schema.minimum as string),
-          {
-            message: `${schema.name} must be at least ${schema.minimum}.`,
-          }
-        )
-      ) as unknown as z.ZodString;
-    }
-
-    if (typeof schema.maximum === "string") {
-      _schema = _schema.pipe(
-        z.custom(
-          (value) => new Date(value) <= new Date(schema.maximum as string),
-          {
-            message: `${schema.name} must be less than ${schema.maximum}.`,
-          }
-        )
-      ) as unknown as z.ZodString;
-    }
+    ) as unknown as z.ZodDate;
   } else if (schema.type === "string") {
     _schema = z.string({
       invalid_type_error: `${schema.name} must be a string.`,
@@ -403,13 +450,12 @@ function generateSchema(
       required_error: `${schema.name} is required.`,
     });
   } else if (schema.type === "array") {
-    const subschema = generateSchema(schema.items);
+    const subschema =
+      typeof schema.items === "object"
+        ? generateSchema(schema.items as SchemaField)
+        : z.any();
 
-    if (typeof subschema === "undefined") {
-      return;
-    }
-
-    _schema = z.array(subschema, {
+    _schema = z.array(subschema as z.ZodType<any>, {
       required_error: `${schema.name} is required.`,
     });
 
@@ -451,18 +497,72 @@ function generateSchema(
       ) as unknown as z.ZodArray<any, "many">;
     }
   } else if (schema.type === "tuple") {
-    const subschema = schema.items.map((item) => generateSchema(item)) as
+    const subschema = (
+      Array.isArray(schema.items)
+        ? schema.items.map((item) => generateSchema(item as SchemaField))
+        : []
+    ) as
       | []
       /* biome-ignore lint/suspicious/noExplicitAny: */
       | [z.ZodType<any>, ...z.ZodType<any>[]];
 
-    if (subschema.some((item) => typeof item === "undefined")) {
-      return;
-    }
+    if (
+      subschema.length &&
+      !subschema.some((item) => typeof item === "undefined")
+    ) {
+      _schema = z.tuple(subschema, {
+        required_error: `${schema.name} is required.`,
+        message: `${schema.name} is not valid.`,
+      });
+    } else if (Array.isArray(schema.anyOf)) {
+      _schema = z.custom(
+        (value) => {
+          for (const anyOf of (schema as SchemaTuple).anyOf as SchemaTuple[]) {
+            const _subschemaDef = {
+              ...anyOf,
+              type: (schema as SchemaTuple).type,
+              name: (schema as SchemaTuple).name,
+            };
 
-    _schema = z.tuple(subschema, {
-      required_error: `${schema.name} is required.`,
-    });
+            if (generateSchema(_subschemaDef)?.safeParse(value).success) {
+              return true;
+            }
+          }
+
+          return false;
+        },
+        {
+          message: `${(schema as SchemaField).name} is not valid.`,
+        }
+      ) as unknown as z.ZodTuple;
+    } else if (Array.isArray(schema.oneOf)) {
+      _schema = z.custom(
+        (value) => {
+          let matches = false;
+
+          for (const oneOf of (schema as SchemaTuple).oneOf as SchemaTuple[]) {
+            const _subschemaDef = {
+              ...oneOf,
+              type: (schema as SchemaTuple).type,
+              name: (schema as SchemaTuple).name,
+            };
+
+            if (generateSchema(_subschemaDef)?.safeParse(value).success) {
+              if (matches) {
+                return false;
+              }
+
+              matches = true;
+            }
+          }
+
+          return matches;
+        },
+        {
+          message: `${(schema as SchemaField).name} is not valid.`,
+        }
+      ) as unknown as z.ZodTuple;
+    }
   } else if (schema.type === "null") {
     _schema = z.null({
       invalid_type_error: `${schema.name} must be null.`,
@@ -484,6 +584,102 @@ function generateSchema(
 
   if ((schema as Schema).nullable === true) {
     _schema = _schema.nullable();
+  }
+
+  if (schema.type !== "tuple") {
+    // The schema here may not be a `SchemaString`, but this escapes a bunch of
+    // `any` type overrides
+    if (Array.isArray((schema as SchemaString).allOf)) {
+      _schema = _schema.pipe(
+        z.custom(
+          (value) => {
+            for (const allOf of (schema as SchemaString)
+              .allOf as SchemaString[]) {
+              const _subschemaDef = {
+                ...allOf,
+                type: (schema as SchemaString).type,
+                name: (schema as SchemaString).name,
+              };
+
+              if (typeof (schema as SchemaString).format === "string") {
+                _subschemaDef.format = (schema as SchemaString).format;
+              }
+
+              if (!generateSchema(_subschemaDef)?.safeParse(value).success) {
+                return false;
+              }
+            }
+
+            return true;
+          },
+          {
+            message: `${(schema as SchemaField).name} is not valid.`,
+          }
+        )
+      ) as unknown as z.ZodString;
+    } else if (Array.isArray((schema as SchemaString).anyOf)) {
+      _schema = _schema.pipe(
+        z.custom(
+          (value) => {
+            for (const anyOf of (schema as SchemaString)
+              .anyOf as SchemaString[]) {
+              const _subschemaDef = {
+                ...anyOf,
+                type: (schema as SchemaString).type,
+                name: (schema as SchemaString).name,
+              };
+
+              if (typeof (schema as SchemaString).format === "string") {
+                _subschemaDef.format = (schema as SchemaString).format;
+              }
+
+              if (generateSchema(_subschemaDef)?.safeParse(value).success) {
+                return true;
+              }
+            }
+
+            return false;
+          },
+          {
+            message: `${(schema as SchemaField).name} is not valid.`,
+          }
+        )
+      ) as unknown as z.ZodString;
+    } else if (Array.isArray((schema as SchemaString).oneOf)) {
+      _schema = _schema.pipe(
+        z.custom(
+          (value) => {
+            let matches = false;
+
+            for (const oneOf of (schema as SchemaString)
+              .oneOf as SchemaString[]) {
+              const _subschemaDef = {
+                ...oneOf,
+                type: (schema as SchemaString).type,
+                name: (schema as SchemaString).name,
+              };
+
+              if (typeof (schema as SchemaString).format === "string") {
+                _subschemaDef.format = (schema as SchemaString).format;
+              }
+
+              if (generateSchema(_subschemaDef)?.safeParse(value).success) {
+                if (matches) {
+                  return false;
+                }
+
+                matches = true;
+              }
+            }
+
+            return matches;
+          },
+          {
+            message: `${(schema as SchemaField).name} is not valid.`,
+          }
+        )
+      ) as unknown as z.ZodString;
+    }
   }
 
   return _schema;
