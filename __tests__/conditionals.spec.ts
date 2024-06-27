@@ -184,6 +184,7 @@ describe("Conditionals", () => {
         required: ["other"],
       },
       else: {
+        type: "object",
         properties: {
           other: {
             type: "string",
@@ -237,7 +238,7 @@ describe("Conditionals", () => {
         properties: {
           string: {
             type: "string",
-            includes: "another great test"
+            includes: "another great test",
           },
         },
       },
@@ -266,15 +267,24 @@ describe("Conditionals", () => {
     expect(schema.safeParse(state).success).toBe(false);
 
     state.other = "a";
-    expect(state).toEqual({ string: "something something another great test", other: "a" });
+    expect(state).toEqual({
+      string: "something something another great test",
+      other: "a",
+    });
     expect(schema.safeParse(state).success).toBe(false);
 
     state.other = "abc";
-    expect(state).toEqual({ string: "something something another great test", other: "abc" });
+    expect(state).toEqual({
+      string: "something something another great test",
+      other: "abc",
+    });
     expect(schema.safeParse(state).success).toBe(true);
 
     state.other = "a".repeat(11);
-    expect(state).toEqual({ string: "something something another great test", other: "a".repeat(11) });
+    expect(state).toEqual({
+      string: "something something another great test",
+      other: "a".repeat(11),
+    });
     expect(schema.safeParse(state).success).toBe(false);
   });
 });

@@ -9,8 +9,8 @@ import type {
   SchemaUi,
   SchemaReturnType,
   SchemaString,
-  SchemaNumber,
   SchemaTuple,
+  SchemaObject,
 } from "./types";
 export type * from "./types";
 
@@ -20,6 +20,7 @@ function generateSchema(
   required?: string[]
 ): SchemaReturnType {
   let _schema: SchemaReturnType = undefined;
+  let _name: string | undefined = (schema as SchemaString).name ?? "This value";
 
   if (schema.type === "object") {
     /* biome-ignore lint/suspicious/noExplicitAny: */
@@ -41,22 +42,22 @@ function generateSchema(
       }
     }
 
-    const computedName = schema.name ?? (schema as Schema).title ?? "Form";
+    _name = (schema as SchemaObject).name ?? (schema as Schema).title ?? "Form";
 
     _schema =
       typeof schema.patternProperties === "object"
         ? (z
             .record(z.string(), z.any(), {
-              invalid_type_error: `${computedName} must be an object.`,
-              required_error: `${computedName} is required.`,
+              invalid_type_error: `${_name} must be an object.`,
+              required_error: `${_name} is required.`,
             })
             .pipe(
               z.custom((value) => {
                 if (
                   !z
                     .object(shape, {
-                      invalid_type_error: `${computedName} must be an object.`,
-                      required_error: `${computedName} is required.`,
+                      invalid_type_error: `${_name} must be an object.`,
+                      required_error: `${_name} is required.`,
                     })
                     .safeParse(value).success
                 ) {
@@ -94,8 +95,8 @@ function generateSchema(
               /* biome-ignore lint/suspicious/noExplicitAny: */
             ) as unknown as z.ZodObject<Record<string, any>>)
         : z.object(shape, {
-            invalid_type_error: `${computedName} must be an object.`,
-            required_error: `${computedName} is required.`,
+            invalid_type_error: `${_name} must be an object.`,
+            required_error: `${_name} is required.`,
           });
 
     if (
@@ -107,27 +108,28 @@ function generateSchema(
         ...schema.if,
         type: "object",
         required: Object.keys(schema.if.properties),
-      });
+      } as SchemaObject);
       const thenSchema = generateSchema({
         ...schema.then,
         type: "object",
-      });
-
+      } as SchemaObject);
       const elseSchema =
         typeof schema.else === "object"
           ? generateSchema({
               ...schema.else,
               type: "object",
-            })
+            } as SchemaObject)
           : undefined;
 
       _schema = _schema.passthrough().pipe(
         z.custom(
           (value) => {
             if (
+              /* biome-ignore lint/suspicious/noExplicitAny: */
               (ifSchema as z.ZodObject<Record<string, any>>).safeParse(value)
                 .success
             ) {
+              /* biome-ignore lint/suspicious/noExplicitAny: */
               return (thenSchema as z.ZodObject<Record<string, any>>).safeParse(
                 value
               ).success;
@@ -140,9 +142,10 @@ function generateSchema(
             return true;
           },
           {
-            message: `${computedName} is missing required information.`,
+            message: `${_name} is missing required information.`,
           }
         )
+        /* biome-ignore lint/suspicious/noExplicitAny: */
       ) as unknown as z.ZodObject<Record<string, any>>;
     }
   } else if (
@@ -150,21 +153,19 @@ function generateSchema(
     (schema.format === "date" || schema.format === "date-time")
   ) {
     if (schema.format === "date-time") {
-      _schema = z
-        .string()
-        .datetime(`${schema.name} must be a valid date-time.`);
+      _schema = z.string().datetime(`${_name} must be a valid date-time.`);
     }
 
     _schema = (_schema ?? z.string()).pipe(
       z.custom((value) => {
         let dateSchema = z.coerce.date({
-          invalid_type_error: `${schema.name} must be a valid ${schema.format}.`,
-          required_error: `${schema.name} is required.`,
+          invalid_type_error: `${_name} must be a valid ${schema.format}.`,
+          required_error: `${_name} is required.`,
         });
 
         if (typeof schema.minimum === "string") {
           dateSchema = dateSchema.min(new Date(schema.minimum), {
-            message: `${schema.name} must not be before ${schema.minimum}.`,
+            message: `${_name} must not be before ${schema.minimum}.`,
           });
         } else if (
           Array.isArray(schema.minimum) &&
@@ -177,13 +178,13 @@ function generateSchema(
                   new Date(value) >=
                   new Date((schema.minimum as [string, string])[1]),
                 {
-                  message: `${schema.name} must be after ${schema.minimum[1]}.`,
+                  message: `${_name} must be after ${schema.minimum[1]}.`,
                 }
               )
             ) as unknown as z.ZodDate;
           } else if (schema.minimum[0] === "[") {
             dateSchema = dateSchema.min(new Date(schema.minimum[1]), {
-              message: `${schema.name} must not be before ${schema.minimum}.`,
+              message: `${_name} must not be before ${schema.minimum}.`,
             });
           }
         } else if (typeof schema.exclusiveMinimum === "string") {
@@ -192,7 +193,7 @@ function generateSchema(
               (value) =>
                 new Date(value) >= new Date(schema.exclusiveMinimum as string),
               {
-                message: `${schema.name} must be after ${schema.exclusiveMinimum}.`,
+                message: `${_name} must be after ${schema.exclusiveMinimum}.`,
               }
             )
           ) as unknown as z.ZodDate;
@@ -200,7 +201,7 @@ function generateSchema(
 
         if (typeof schema.maximum === "string") {
           dateSchema = dateSchema.max(new Date(schema.maximum), {
-            message: `${schema.name} must not be after ${schema.maximum}.`,
+            message: `${_name} must not be after ${schema.maximum}.`,
           });
         } else if (
           Array.isArray(schema.maximum) &&
@@ -213,13 +214,13 @@ function generateSchema(
                   new Date(value) <=
                   new Date((schema.maximum as [string, string])[1]),
                 {
-                  message: `${schema.name} must be before ${schema.maximum[1]}.`,
+                  message: `${_name} must be before ${schema.maximum[1]}.`,
                 }
               )
             ) as unknown as z.ZodDate;
           } else if (schema.maximum[0] === "]") {
             dateSchema = dateSchema.max(new Date(schema.maximum[1]), {
-              message: `${schema.name} must not be after ${schema.maximum}.`,
+              message: `${_name} must not be after ${schema.maximum}.`,
             });
           }
         } else if (typeof schema.exclusiveMaximum === "string") {
@@ -228,7 +229,7 @@ function generateSchema(
               (value) =>
                 new Date(value) <= new Date(schema.exclusiveMaximum as string),
               {
-                message: `${schema.name} must be before ${schema.exclusiveMaximum}.`,
+                message: `${_name} must be before ${schema.exclusiveMaximum}.`,
               }
             )
           ) as unknown as z.ZodDate;
@@ -239,82 +240,80 @@ function generateSchema(
     ) as unknown as z.ZodDate;
   } else if (schema.type === "string") {
     _schema = z.string({
-      invalid_type_error: `${schema.name} must be a string.`,
-      required_error: `${schema.name} is required.`,
+      invalid_type_error: `${_name} must be a string.`,
+      required_error: `${_name} is required.`,
     });
 
     if (schema.format === "uuid") {
       _schema = _schema.uuid({
-        message: `${schema.name} must be a valid UUID.`,
+        message: `${_name} must be a valid UUID.`,
       });
     } else if (schema.format === "url") {
       _schema = _schema.url({
-        message: `${schema.name} must be a valid URL.`,
+        message: `${_name} must be a valid URL.`,
       });
     } else if (schema.format === "email") {
       _schema = _schema.email({
-        message: `${schema.name} must be a valid email address.`,
+        message: `${_name} must be a valid email address.`,
       });
     } else if (schema.format === "ip") {
       _schema = _schema.ip({
-        message: `${schema.name} must be a valid IP address.`,
+        message: `${_name} must be a valid IP address.`,
       });
     } else if (schema.format === "ipv4") {
       _schema = _schema.ip({
         version: "v4",
-        message: `${schema.name} must be a valid IPv4 address.`,
+        message: `${_name} must be a valid IPv4 address.`,
       });
     } else if (schema.format === "ipv6") {
       _schema = _schema.ip({
         version: "v6",
-        message: `${schema.name} must be a valid IPv6 address.`,
+        message: `${_name} must be a valid IPv6 address.`,
       });
     } else if (schema.format === "time") {
       _schema = _schema.time({
-        message: `${schema.name} must be a valid time.`,
+        message: `${_name} must be a valid time.`,
       });
     } else if (schema.format === "base64") {
       _schema = _schema.base64({
-        message: `${schema.name} must be a valid base64 string.`,
+        message: `${_name} must be a valid base64 string.`,
       });
     }
 
     if (typeof schema.minLength === "number") {
       _schema = _schema.min(schema.minLength, {
         message:
-          `${schema.name} must be at least ` +
-          `${schema.minLength} characters.`,
+          `${_name} must be at least ` + `${schema.minLength} characters.`,
       });
     }
 
     if (typeof schema.maxLength === "number") {
       _schema = _schema.max(schema.maxLength, {
         message:
-          `${schema.name} must be less than ` +
-          `${schema.maxLength} characters.`,
+          `${_name} must be less than ` + `${schema.maxLength} characters.`,
       });
     }
 
     if (typeof schema.length === "number") {
       _schema = _schema.length(schema.length, {
-        message: `${schema.name} must be ${schema.length} characters long.`,
+        message: `${_name} must be ${schema.length} characters long.`,
       });
     }
 
     if (schema.pattern) {
       _schema = _schema.regex(new RegExp(schema.pattern), {
-        message: `${schema.name} does not match required format.`,
+        message: `${_name} does not match required format.`,
       });
     }
 
     if (typeof schema.includes === "string") {
       _schema = _schema.includes(schema.includes, {
-        message: `${schema.name} must include "${schema.includes}".`,
+        message: `${_name} must include "${schema.includes}".`,
       });
     } else if (Array.isArray(schema.includes)) {
       for (const item of schema.includes) {
         _schema = _schema.includes(item, {
-          message: `${schema.name} must include "${item}".`,
+          message: `${_name} must include "${item}".`,
         });
       }
     }
@@ -326,7 +325,7 @@ function generateSchema(
             typeof value !== "string" ||
             !value.includes(schema.excludes as string),
           {
-            message: `${schema.name} must not include "${schema.excludes}".`,
+            message: `${_name} must not include "${schema.excludes}".`,
           }
         )
       ) as unknown as z.ZodString;
@@ -336,7 +335,7 @@ function generateSchema(
           z.custom(
             (value) => typeof value !== "string" || !value.includes(item),
             {
-              message: `${schema.name} must not include "${schema.excludes}".`,
+              message: `${_name} must not include "${schema.excludes}".`,
             }
           )
         ) as unknown as z.ZodString;
@@ -345,13 +344,13 @@ function generateSchema(
 
     if (schema.startsWith) {
       _schema = _schema.startsWith(schema.startsWith, {
-        message: `${schema.name} must start with "${schema.startsWith}".`,
+        message: `${_name} must start with "${schema.startsWith}".`,
       });
     }
 
     if (schema.endsWith) {
       _schema = _schema.endsWith(schema.endsWith, {
-        message: `${schema.name} must end with "${schema.endsWith}".`,
+        message: `${_name} must end with "${schema.endsWith}".`,
       });
     }
 
@@ -359,9 +358,9 @@ function generateSchema(
       const enumValues: ReadonlyArray<string> = [...schema.enum];
 
       _schema = z.enum(enumValues as [string, ...string[]], {
-        invalid_type_error: `${schema.name} is not a valid option.`,
-        required_error: `${schema.name} is not a valid option.`,
-        message: `${schema.name} is not a valid option.`,
+        invalid_type_error: `${_name} is not a valid option.`,
+        required_error: `${_name} is not a valid option.`,
+        message: `${_name} is not a valid option.`,
       });
     }
 
@@ -373,7 +372,7 @@ function generateSchema(
 
       _schema = _schema.pipe(
         z.custom((value) => !enumValues.includes(value), {
-          message: `${schema.name} is not a valid option.`,
+          message: `${_name} is not a valid option.`,
         })
       ) as unknown as z.ZodString;
     }
@@ -381,73 +380,69 @@ function generateSchema(
     if (schema.type === "integer") {
       _schema = z
         .number({
-          invalid_type_error: `${schema.name} must be an integer.`,
-          required_error: `${schema.name} is required.`,
+          invalid_type_error: `${_name} must be an integer.`,
+          required_error: `${_name} is required.`,
         })
         .int();
     } else {
       _schema = z.number({
-        invalid_type_error: `${schema.name} must be a number.`,
-        required_error: `${schema.name} is required.`,
+        invalid_type_error: `${_name} must be a number.`,
+        required_error: `${_name} is required.`,
       });
     }
 
     if (typeof schema.minimum === "number") {
       _schema = _schema.min(schema.minimum, {
-        message: `${schema.name} must be at least ` + `${schema.minimum}.`,
+        message: `${_name} must be at least ` + `${schema.minimum}.`,
       });
     } else if (Array.isArray(schema.minimum) && schema.minimum.length === 2) {
       if (schema.minimum[0] === "(") {
         _schema = _schema.gt(schema.minimum[1], {
-          message:
-            `${schema.name} must be greater than ` + `${schema.minimum[1]}.`,
+          message: `${_name} must be greater than ` + `${schema.minimum[1]}.`,
         });
       } else if (schema.minimum[0] === "[") {
         _schema = _schema.gte(schema.minimum[1], {
           message:
-            `${schema.name} must be greater than or equal to ` +
+            `${_name} must be greater than or equal to ` +
             `${schema.minimum[1]}.`,
         });
       }
     } else if (typeof schema.exclusiveMinimum === "number") {
       _schema = _schema.gt(schema.exclusiveMinimum, {
-        message: `${schema.name} must be greater than ${schema.exclusiveMinimum}.`,
+        message: `${_name} must be greater than ${schema.exclusiveMinimum}.`,
       });
     }
 
     if (typeof schema.maximum === "number") {
       _schema = _schema.max(schema.maximum, {
-        message: `${schema.name} must be less than ` + `${schema.maximum}.`,
+        message: `${_name} must be less than ` + `${schema.maximum}.`,
       });
     } else if (Array.isArray(schema.maximum) && schema.maximum.length === 2) {
       if (schema.maximum[0] === ")") {
         _schema = _schema.lt(schema.maximum[1], {
-          message:
-            `${schema.name} must be less than ` + `${schema.maximum[1]}.`,
+          message: `${_name} must be less than ` + `${schema.maximum[1]}.`,
         });
       } else if (schema.maximum[0] === "]") {
         _schema = _schema.lte(schema.maximum[1], {
           message:
-            `${schema.name} must be less than or equal to ` +
-            `${schema.maximum[1]}.`,
+            `${_name} must be less than or equal to ` + `${schema.maximum[1]}.`,
         });
       }
     } else if (typeof schema.exclusiveMaximum === "number") {
       _schema = _schema.lt(schema.exclusiveMaximum, {
-        message: `${schema.name} must be less than ${schema.exclusiveMaximum}.`,
+        message: `${_name} must be less than ${schema.exclusiveMaximum}.`,
       });
     }
 
     if (typeof schema.multipleOf === "number") {
       _schema = _schema.multipleOf(schema.multipleOf, {
-        message:
-          `${schema.name} must be a multiple of ` + `${schema.multipleOf}.`,
+        message: `${_name} must be a multiple of ` + `${schema.multipleOf}.`,
       });
     }
   } else if (schema.type === "boolean") {
     _schema = z.boolean({
-      invalid_type_error: `${schema.name} must be true or false.`,
-      required_error: `${schema.name} is required.`,
+      invalid_type_error: `${_name} must be true or false.`,
+      required_error: `${_name} is required.`,
     });
   } else if (schema.type === "array") {
     const subschema =
@@ -455,30 +450,31 @@ function generateSchema(
         ? generateSchema(schema.items as SchemaField)
         : z.any();
 
+    /* biome-ignore lint/suspicious/noExplicitAny: */
     _schema = z.array(subschema as z.ZodType<any>, {
-      required_error: `${schema.name} is required.`,
+      required_error: `${_name} is required.`,
     });
 
     if (typeof schema.minItems === "number") {
       _schema = _schema.min(schema.minItems, {
-        message: `${schema.name} must have at least ${schema.minItems} items.`,
+        message: `${_name} must have at least ${schema.minItems} items.`,
       });
     }
 
     if (typeof schema.maxItems === "number") {
       _schema = _schema.max(schema.maxItems, {
-        message: `${schema.name} must have less than ${schema.maxItems} items.`,
+        message: `${_name} must have less than ${schema.maxItems} items.`,
       });
     }
 
     if (typeof schema.length === "number") {
       _schema = _schema.length(schema.length, {
-        message: `${schema.name} must have ${schema.length} items.`,
+        message: `${_name} must have ${schema.length} items.`,
       });
     }
 
     if (schema.nonempty === true) {
-      _schema = _schema.nonempty(`${schema.name} must not be empty.`);
+      _schema = _schema.nonempty(`${_name} must not be empty.`);
     }
 
     if (schema.uniqueItems === true) {
@@ -490,7 +486,7 @@ function generateSchema(
             return value.length === unique.size;
           },
           {
-            message: `${schema.name} must be unique.`,
+            message: `${_name} must be unique.`,
           }
         )
         /* biome-ignore lint/suspicious/noExplicitAny: */
@@ -511,8 +507,8 @@ function generateSchema(
       !subschema.some((item) => typeof item === "undefined")
     ) {
       _schema = z.tuple(subschema, {
-        required_error: `${schema.name} is required.`,
-        message: `${schema.name} is not valid.`,
+        required_error: `${_name} is required.`,
+        message: `${_name} is not valid.`,
       });
     } else if (Array.isArray(schema.anyOf)) {
       _schema = z.custom(
@@ -532,7 +528,7 @@ function generateSchema(
           return false;
         },
         {
-          message: `${(schema as SchemaField).name} is not valid.`,
+          message: `${_name} is not valid.`,
         }
       ) as unknown as z.ZodTuple;
     } else if (Array.isArray(schema.oneOf)) {
@@ -559,14 +555,14 @@ function generateSchema(
           return matches;
         },
         {
-          message: `${(schema as SchemaField).name} is not valid.`,
+          message: `${_name} is not valid.`,
         }
       ) as unknown as z.ZodTuple;
     }
   } else if (schema.type === "null") {
     _schema = z.null({
-      invalid_type_error: `${schema.name} must be null.`,
-      required_error: `${schema.name} is required.`,
+      invalid_type_error: `${_name} must be null.`,
+      required_error: `${_name} is required.`,
     });
   }
 
@@ -613,7 +609,7 @@ function generateSchema(
             return true;
           },
           {
-            message: `${(schema as SchemaField).name} is not valid.`,
+            message: `${_name} is not valid.`,
           }
         )
       ) as unknown as z.ZodString;
@@ -641,7 +637,7 @@ function generateSchema(
             return false;
           },
           {
-            message: `${(schema as SchemaField).name} is not valid.`,
+            message: `${_name} is not valid.`,
           }
         )
       ) as unknown as z.ZodString;
@@ -675,7 +671,7 @@ function generateSchema(
             return matches;
           },
           {
-            message: `${(schema as SchemaField).name} is not valid.`,
+            message: `${_name} is not valid.`,
           }
         )
       ) as unknown as z.ZodString;

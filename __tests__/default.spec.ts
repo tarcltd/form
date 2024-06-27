@@ -69,7 +69,7 @@ describe("default", () => {
       },
       {},
       {
-        defaults: {  string: "test", other: "test" },
+        defaults: { string: "test", other: "test" },
       }
     );
 

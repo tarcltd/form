@@ -29,9 +29,9 @@ describe("reform", () => {
     state["another:favcolor"] = "deep purple";
 
     expect(finalize()).toEqual({
-      'main:name': "John Doe",
-      'another:email': "john@doe.com",
-      'another:favcolor': "deep purple",
+      "main:name": "John Doe",
+      "another:email": "john@doe.com",
+      "another:favcolor": "deep purple",
     });
   });
 

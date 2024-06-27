@@ -669,7 +669,7 @@ describe("fields", () => {
       expect(schema.safeParse(state).success).toBe(false);
     });
 
-    it ("supports date with exclusive minimum and maximum", () => {
+    it("supports date with exclusive minimum and maximum", () => {
       const { state, schema } = form({
         type: "object",
         properties: {
@@ -704,7 +704,7 @@ describe("fields", () => {
       expect(schema.safeParse(state).success).toBe(false);
     });
 
-    it ("supports date with exclusive minimum and maximum alt", () => {
+    it("supports date with exclusive minimum and maximum alt", () => {
       const { state, schema } = form({
         type: "object",
         properties: {

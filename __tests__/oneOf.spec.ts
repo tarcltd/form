@@ -281,7 +281,33 @@ describe("oneOf", () => {
                 },
                 {
                   type: "boolean",
-                }
+                },
+              ],
+            },
+            {
+              items: [
+                {
+                  type: "boolean",
+                },
+                {
+                  type: "boolean",
+                },
+                {
+                  type: "boolean",
+                },
+              ],
+            },
+            {
+              items: [
+                {
+                  type: "boolean",
+                },
+                {
+                  type: "boolean",
+                },
+                {
+                  type: "boolean",
+                },
               ],
             },
           ],
@@ -306,6 +332,9 @@ describe("oneOf", () => {
     expect(schema.safeParse(state).success).toBe(true);
 
     state.tuple = [23, "test", 42, false];
+    expect(schema.safeParse(state).success).toBe(false);
+
+    state.tuple = [true, true, true];
     expect(schema.safeParse(state).success).toBe(false);
   });
 });

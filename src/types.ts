@@ -2,14 +2,10 @@ import type { z } from "zod";
 import type createForm from ".";
 
 /**
- * A generator type used for narrowing. This is for internal use only.
+ * The base type for a field. This is for internal use only.
  */
 /* biome-ignore lint/suspicious/noExplicitAny: */
-export type SchemaFieldType<T extends Record<string, any>> = {
-  /**
-   * The name of the field.
-   */
-  name: string;
+export type SchemaFieldCommonType<T extends Record<string, any>> = {
   /**
    * The description of the field.
    */
@@ -31,6 +27,44 @@ export type SchemaFieldType<T extends Record<string, any>> = {
    */
   nullable?: boolean;
 } & T;
+
+/**
+ * A generator type used for narrowing. This is for internal use only.
+ */
+/* biome-ignore lint/suspicious/noExplicitAny: */
+export type SchemaFieldType<T extends Record<string, any>> =
+  SchemaFieldCommonType<
+    {
+      /**
+       * The name of the field.
+       */
+      name: string;
+    } & T
+  >;
+
+/**
+ * A conditional definition for a `SchemaObject`.
+ */
+export type SchemaConditional = {
+  /**
+   * A conditional definition for the object.
+   */
+  if?: {
+    /**
+     * A definition of the form state condition. All fields in the `properties`
+     * are implicitly required to result in a `true` state.
+     */
+    properties: Record<string, SchemaField>;
+  };
+  /**
+   * A definition of the object if the condition is `true`.
+   */
+  then?: SchemaObject;
+  /**
+   * A definition of the object if the condition is `false`.
+   */
+  else?: SchemaObject;
+};
 
 /**
  * A JSON form schema definition.
@@ -80,36 +114,16 @@ export type Schema = Record<string, any> & {
    */
   /* biome-ignore lint/suspicious/noExplicitAny: */
   metadata?: Record<string, any>;
-};
-
-/**
- * A conditional definition for a `SchemaObject`.
- */
-export type SchemaConditional = {
-  /**
-   * A conditional definition for the object.
-   */
-  if?: {
-    /**
-     * A definition of the form state condition. All fields in the `properties`
-     * are implicitly required to result in a `true` state.
-     */
-    properties: Record<string, Omit<SchemaField, "name">>;
-  };
-  /**
-   * A definition of the object if the condition is `true`.
-   */
-  then?: SchemaObject;
-  /**
-   * A definition of the object if the condition is `false`.
-   */
-  else?: SchemaObject;
-};
+} & SchemaConditional;
 
 /**
  * An object field definition.
  */
-export type SchemaObject = SchemaFieldType<{
+export type SchemaObject = SchemaFieldCommonType<{
+  /**
+   * The name of the field. This may be omitted if used in a conditional.
+   */
+  name?: string;
   /**
    * The type of the field.
    */
@@ -233,9 +247,9 @@ export type SchemaStringDate = SchemaFieldType<{
    */
   type: "string";
   /**
-   * The minimum date of the input. This is inclusive by default. Using a tuple 
+   * The minimum date of the input. This is inclusive by default. Using a tuple
    * to specify the minimum is supported.
-   * 
+   *
    * @example
    *
    * Must be greater than August 1, 2024.
@@ -247,9 +261,9 @@ export type SchemaStringDate = SchemaFieldType<{
    */
   minimum?: string | ["(" | "[", string];
   /**
-   * The maximum date of the input. This is inclusive by default. Using a tuple 
+   * The maximum date of the input. This is inclusive by default. Using a tuple
    * to specify the maximum is supported.
-   * 
+   *
    * @example
    *
    * Must be less than August 31, 2024.
@@ -259,7 +273,7 @@ export type SchemaStringDate = SchemaFieldType<{
    * }
    * ```
    */
-  maximum?:   string | [")" | "]", string];
+  maximum?: string | [")" | "]", string];
   /**
    * The exclusive minimum date of the input.
    */
@@ -297,10 +311,10 @@ export type SchemaStringDatetime = SchemaFieldType<{
    * The type of the field.
    */
   type: "string";
-  /** 
-   * The minimum date or date-time of the input. This is inclusive by default. 
+  /**
+   * The minimum date or date-time of the input. This is inclusive by default.
    * Using a tuple to specify the minimum is supported.
-   * 
+   *
    * @example
    *
    * Must be greater than August 1, 2024.
@@ -312,9 +326,9 @@ export type SchemaStringDatetime = SchemaFieldType<{
    */
   minimum?: string | ["(" | "[", string];
   /**
-   * The maximum date or date-time of the input. This is inclusive by default. 
+   * The maximum date or date-time of the input. This is inclusive by default.
    * Using a tuple to specify the maximum is supported.
-   * 
+   *
    * @example
    *
    * Must be less than August 31, 2024.
@@ -324,7 +338,7 @@ export type SchemaStringDatetime = SchemaFieldType<{
    * }
    * ```
    */
-  maximum?:   string | [")" | "]", string];
+  maximum?: string | [")" | "]", string];
   /**
    * The exclusive minimum date or date-time of the input.
    */
@@ -639,7 +653,14 @@ export type SchemaField =
   | SchemaBoolean
   | SchemaArray
   | SchemaTuple
-  | SchemaNull;
+  | SchemaNull
+  | Omit<SchemaString, "name">
+  | Omit<SchemaNumber, "name">
+  | Omit<SchemaInteger, "name">
+  | Omit<SchemaBoolean, "name">
+  | Omit<SchemaArray, "name">
+  | Omit<SchemaTuple, "name">
+  | Omit<SchemaNull, "name">;
 
 /**
  * The return type of the schema. This is for internal use only.

@@ -9,6 +9,13 @@
     "lineEnding": "lf",
     "lineWidth": 80
   },
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "noThenProperty": "off"
+      }
+    }
+  },
   "javascript": {
     "formatter": {
       "arrowParentheses": "always",
@@ -17,7 +24,7 @@
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
       "semicolons": "asNeeded",
-      "trailingComma": "es5"
+      "trailingCommas": "es5"
     }
   },
   "json": {

@@ -35,8 +35,8 @@ export function deep<T = unknown>(
       if (typeof nextKey !== "undefined") {
         obj[currentKey] = obj[currentKey]
           ? obj[currentKey]
-          /* biome-ignore lint/suspicious/noGlobalIsNan: */
-          : isNaN(nextKey as number)
+          : /* biome-ignore lint/suspicious/noGlobalIsNan: */
+          isNaN(nextKey as number)
           ? {}
           : [];
       } else {

@@ -16,39 +16,93 @@ describe("Schema", () => {
 
     expect(validate({ type: "object", properties: {} })).toBe(false);
 
-    expect(validate({ type: "object", properties: {}, required: [] })).toBe(true);
+    expect(validate({ type: "object", properties: {}, required: [] })).toBe(
+      true
+    );
 
-    expect(validate({ type: "array", properties: {}, required: [] })).toBe(false);
+    expect(validate({ type: "array", properties: {}, required: [] })).toBe(
+      false
+    );
   });
 
   it("should require non-empty $schema", () => {
-    expect(validate({ $schema: "", type: "object", properties: {}, required: [] })).toBe(false);
+    expect(
+      validate({ $schema: "", type: "object", properties: {}, required: [] })
+    ).toBe(false);
 
-    expect(validate({ $schema: "something", type: "object", properties: {}, required: [] })).toBe(true);
+    expect(
+      validate({
+        $schema: "something",
+        type: "object",
+        properties: {},
+        required: [],
+      })
+    ).toBe(true);
   });
 
   it("should require non-empty $id", () => {
-    expect(validate({ $id: "", type: "object", properties: {}, required: [] })).toBe(false);
+    expect(
+      validate({ $id: "", type: "object", properties: {}, required: [] })
+    ).toBe(false);
 
-    expect(validate({ $id: "something", type: "object", properties: {}, required: [] })).toBe(true);
+    expect(
+      validate({
+        $id: "something",
+        type: "object",
+        properties: {},
+        required: [],
+      })
+    ).toBe(true);
   });
 
   it("should require non-empty $comment", () => {
-    expect(validate({ $comment: "", type: "object", properties: {}, required: [] })).toBe(false);
+    expect(
+      validate({ $comment: "", type: "object", properties: {}, required: [] })
+    ).toBe(false);
 
-    expect(validate({ $comment: "something", type: "object", properties: {}, required: [] })).toBe(true);
+    expect(
+      validate({
+        $comment: "something",
+        type: "object",
+        properties: {},
+        required: [],
+      })
+    ).toBe(true);
   });
 
   it("should require non-empty title", () => {
-    expect(validate({ title: "", type: "object", properties: {}, required: [] })).toBe(false);
+    expect(
+      validate({ title: "", type: "object", properties: {}, required: [] })
+    ).toBe(false);
 
-    expect(validate({ title: "something", type: "object", properties: {}, required: [] })).toBe(true);
+    expect(
+      validate({
+        title: "something",
+        type: "object",
+        properties: {},
+        required: [],
+      })
+    ).toBe(true);
   });
 
   it("should require non-empty description", () => {
-    expect(validate({ description: "", type: "object", properties: {}, required: [] })).toBe(false);
+    expect(
+      validate({
+        description: "",
+        type: "object",
+        properties: {},
+        required: [],
+      })
+    ).toBe(false);
 
-    expect(validate({ description: "something", type: "object", properties: {}, required: [] })).toBe(true);
+    expect(
+      validate({
+        description: "something",
+        type: "object",
+        properties: {},
+        required: [],
+      })
+    ).toBe(true);
   });
 
   describe("object", () => {
@@ -58,10 +112,10 @@ describe("Schema", () => {
           type: "object",
           properties: {
             field: {
-              type: "object"
-            }
+              type: "object",
+            },
           },
-          required: []
+          required: [],
         })
       ).toBe(false); // Missing 'name' property in 'field'
 
@@ -71,10 +125,10 @@ describe("Schema", () => {
           properties: {
             field: {
               type: "object",
-              name: "field"
-            }
+              name: "field",
+            },
           },
-          required: []
+          required: [],
         })
       ).toBe(false); // Missing 'required' property in 'field'
 
@@ -85,10 +139,10 @@ describe("Schema", () => {
             field: {
               type: "object",
               name: "field",
-              required: []
-            }
+              required: [],
+            },
           },
-          required: []
+          required: [],
         })
       ).toBe(true);
 
@@ -100,10 +154,10 @@ describe("Schema", () => {
               type: "object",
               name: "field",
               properties: {},
-              required: []
-            }
+              required: [],
+            },
           },
-          required: []
+          required: [],
         })
       ).toBe(true);
 
@@ -115,63 +169,65 @@ describe("Schema", () => {
               type: "object",
               name: "field",
               patternProperties: {},
-              required: []
-            }
+              required: [],
+            },
           },
-          required: []
+          required: [],
         })
       ).toBe(true);
     });
 
     it("should validate with if/then/else structure", () => {
-      expect(validate({
-        type: "object",
-        properties: {
-          conditionField: {
-            type: "string",
-            name: "conditionField"
-          },
-          field1: {
-            type: "string",
-            name: "field1"
-          },
-          field2: {
-            type: "string",
-            name: "field2"
-          }
-        },
-        required: ["conditionField"],
-        if: {
+      expect(
+        validate({
+          type: "object",
           properties: {
             conditionField: {
               type: "string",
-              minLength: 3
-            }
-          },
-        },
-        then: {
-          type: "object",
-          properties: {
+              name: "conditionField",
+            },
             field1: {
               type: "string",
               name: "field1",
-              minLength: 5
-            }
-          },
-          required: ["field1"]
-        },
-        else: {
-          type: "object",
-          properties: {
+            },
             field2: {
               type: "string",
               name: "field2",
-              minLength: 2
-            }
+            },
           },
-          required: ["field2"]
-        }
-      })).toBe(true);
+          required: ["conditionField"],
+          if: {
+            properties: {
+              conditionField: {
+                type: "string",
+                minLength: 3,
+              },
+            },
+          },
+          then: {
+            type: "object",
+            properties: {
+              field1: {
+                type: "string",
+                name: "field1",
+                minLength: 5,
+              },
+            },
+            required: ["field1"],
+          },
+          else: {
+            type: "object",
+            properties: {
+              field2: {
+                type: "string",
+                name: "field2",
+                minLength: 2,
+              },
+            },
+            required: ["field2"],
+          },
+        })
+      ).toBe(true);
     });
   });
 
@@ -186,7 +242,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(false);
 
       expect(
@@ -199,7 +255,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
     });
   });
@@ -215,7 +271,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(false);
 
       expect(
@@ -228,7 +284,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
 
       expect(
@@ -238,11 +294,11 @@ describe("Schema", () => {
             field: {
               type: "string",
               name: "field",
-              format: 'date'
+              format: "date",
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
     });
   });
@@ -258,7 +314,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(false);
 
       expect(
@@ -271,7 +327,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
 
       expect(
@@ -286,7 +342,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
 
       expect(
@@ -301,7 +357,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
     });
   });
@@ -317,7 +373,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(false);
 
       expect(
@@ -330,7 +386,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
 
       expect(
@@ -345,7 +401,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
 
       expect(
@@ -360,7 +416,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
     });
   });
@@ -376,7 +432,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(false);
 
       expect(
@@ -389,7 +445,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
     });
   });
@@ -409,7 +465,7 @@ describe("Schema", () => {
             },
           },
           required: ["field"],
-        }),
+        })
       ).toBe(false);
 
       expect(
@@ -426,7 +482,7 @@ describe("Schema", () => {
             },
           },
           required: ["field"],
-        }),
+        })
       ).toBe(true);
 
       expect(
@@ -446,7 +502,7 @@ describe("Schema", () => {
             },
           },
           required: ["field"],
-        }),
+        })
       ).toBe(true);
     });
 
@@ -469,7 +525,7 @@ describe("Schema", () => {
             },
           },
           required: ["field"],
-        }),
+        })
       ).toBe(true);
     });
   });
@@ -484,12 +540,12 @@ describe("Schema", () => {
               type: "tuple",
               items: [
                 { type: "string", name: "tupleStrField" },
-                { type: "number", name: "tupleNumField" }
-              ]
+                { type: "number", name: "tupleNumField" },
+              ],
             },
           },
           required: ["field"],
-        }),
+        })
       ).toBe(false);
 
       expect(
@@ -501,12 +557,12 @@ describe("Schema", () => {
               name: "field",
               items: [
                 { type: "string", name: "strField" },
-                { type: "number", name: "numField" }
+                { type: "number", name: "numField" },
               ],
             },
           },
           required: ["field"],
-        }),
+        })
       ).toBe(true);
     });
 
@@ -524,12 +580,12 @@ describe("Schema", () => {
                   type: "array",
                   name: "arrField",
                   items: { type: "number", name: "arrNumField" },
-                }
+                },
               ],
             },
           },
           required: ["field"],
-        }),
+        })
       ).toBe(true);
     });
   });
@@ -545,7 +601,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(false);
 
       expect(
@@ -558,7 +614,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
     });
   });
@@ -574,7 +630,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
 
       expect(
@@ -587,7 +643,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
     });
   });
@@ -603,7 +659,7 @@ describe("Schema", () => {
             },
           },
           required: [],
-        }),
+        })
       ).toBe(true);
     });
   });

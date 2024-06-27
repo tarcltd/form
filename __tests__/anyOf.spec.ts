@@ -284,7 +284,7 @@ describe("anyOf", () => {
                 },
                 {
                   type: "boolean",
-                }
+                },
               ],
             },
           ],
