@@ -2,6 +2,7 @@
   "name": "@tarcltd/form",
   "version": "1.0.13",
   "description": "Create a JS object for use in form UI, Zod schema, and various utilities, from a simple JSON object.",
+  "type": "module",
   "scripts": {
     "install": "tsx scripts/reversion.ts",
     "lint": "npx @biomejs/biome lint src __tests__",
@@ -9,7 +10,13 @@
     "test:ci": "vitest run --coverage",
     "publish": "jsr publish"
   },
-  "keywords": [],
+  "keywords": [
+    "form",
+    "zod",
+    "json",
+    "schema",
+    "ui"
+  ],
   "author": "TARC Ltd. (tarc.ltd) <support@tarc.ltd>",
   "license": "MIT",
   "dependencies": {
