@@ -124,11 +124,24 @@ function generateSchema(
       _schema = _schema.passthrough().pipe(
         z.custom(
           (value) => {
+            if (typeof schema.attrs === "object") {
+              delete schema.attrs.condition;
+
+              if (Object.keys(schema.attrs).length === 0) {
+                delete schema.attrs;
+              }
+            }
+
             if (
               /* biome-ignore lint/suspicious/noExplicitAny: */
               (ifSchema as z.ZodObject<Record<string, any>>).safeParse(value)
                 .success
             ) {
+              schema.attrs = {
+                ...schema.attrs,
+                condition: schema.then,
+              };
+
               /* biome-ignore lint/suspicious/noExplicitAny: */
               return (thenSchema as z.ZodObject<Record<string, any>>).safeParse(
                 value
@@ -136,6 +149,11 @@ function generateSchema(
             }
 
             if (elseSchema) {
+              schema.attrs = {
+                ...schema.attrs,
+                condition: schema.else,
+              };
+
               return elseSchema.safeParse(value).success;
             }
 

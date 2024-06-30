@@ -98,7 +98,7 @@ describe("Conditionals", () => {
   });
 
   it("should conditionally require a field with if / then", async () => {
-    const { state, schema } = form({
+    const { state, schema, input } = form({
       type: "object",
       properties: {
         string: {
@@ -139,7 +139,88 @@ describe("Conditionals", () => {
     state.string = "test";
     expect(state).toEqual({ string: "test" });
     expect(schema.safeParse(state).success).toBe(false);
+    expect(input).toEqual({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+        },
+      },
+      required: ["string"],
+      if: {
+        properties: {
+          string: {
+            type: "string",
+            enum: ["test"],
+          },
+        },
+      },
+      then: {
+        type: "object",
+        properties: {
+          other: {
+            type: "string",
+            name: "Other",
+            minLength: 3,
+            maxLength: 10,
+          },
+        },
+        required: ["other"],
+      },
+      attrs: {
+        // Conditional subforms appear in the attrs object under the `condition` key
+        condition: {
+          properties: {
+            other: {
+              maxLength: 10,
+              minLength: 3,
+              name: "Other",
+              type: "string",
+            },
+          },
+          required: ["other"],
+          type: "object",
+        },
+      },
+    });
 
+    state.string = "tes";
+    expect(state).toEqual({ string: "tes" });
+    expect(schema.safeParse(state).success).toBe(true);
+    expect(input).toEqual({
+      type: "object",
+      properties: {
+        string: {
+          type: "string",
+          name: "String",
+        },
+      },
+      required: ["string"],
+      if: {
+        properties: {
+          string: {
+            type: "string",
+            enum: ["test"],
+          },
+        },
+      },
+      then: {
+        type: "object",
+        properties: {
+          other: {
+            type: "string",
+            name: "Other",
+            minLength: 3,
+            maxLength: 10,
+          },
+        },
+        required: ["other"],
+      },
+    });
+    
+
+    state.string = "test";
     state.other = "a";
     expect(state).toEqual({ string: "test", other: "a" });
     expect(schema.safeParse(state).success).toBe(false);
