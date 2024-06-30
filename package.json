@@ -20,6 +20,8 @@
   "author": "TARC Ltd. (tarc.ltd) <support@tarc.ltd>",
   "license": "MIT",
   "dependencies": {
+    "date-fns": "^3.6.0",
+    "date-fns-tz": "^3.1.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {

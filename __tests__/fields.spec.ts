@@ -597,6 +597,14 @@ describe("fields", () => {
       state.date = "08/01/24";
       expect(state).toEqual({ date: "08/01/24" });
       expect(schema.safeParse(state).success).toBe(true);
+
+      state.date = "08-01-2024";
+      expect(state).toEqual({ date: "08-01-2024" });
+      expect(schema.safeParse(state).success).toBe(true);
+
+      state.date = "08-01-20";
+      expect(state).toEqual({ date: "08-01-20" });
+      expect(schema.safeParse(state).success).toBe(true);
     });
 
     it("supports date with minimum and maximum", () => {
@@ -627,7 +635,7 @@ describe("fields", () => {
 
       state.date = "08/31/24";
       expect(state).toEqual({ date: "08/31/24" });
-      expect(schema.safeParse(state).success).toBe(false);
+      expect(schema.safeParse(state).success).toBe(true);
 
       state.date = "09/01/24";
       expect(state).toEqual({ date: "09/01/24" });
@@ -662,7 +670,7 @@ describe("fields", () => {
 
       state.date = "08/31/24";
       expect(state).toEqual({ date: "08/31/24" });
-      expect(schema.safeParse(state).success).toBe(false);
+      expect(schema.safeParse(state).success).toBe(true);
 
       state.date = "09/01/24";
       expect(state).toEqual({ date: "09/01/24" });
@@ -693,6 +701,10 @@ describe("fields", () => {
 
       state.date = "08/01/24";
       expect(state).toEqual({ date: "08/01/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "08/15/24";
+      expect(state).toEqual({ date: "08/15/24" });
       expect(schema.safeParse(state).success).toBe(true);
 
       state.date = "08/31/24";
@@ -728,6 +740,10 @@ describe("fields", () => {
 
       state.date = "08/01/24";
       expect(state).toEqual({ date: "08/01/24" });
+      expect(schema.safeParse(state).success).toBe(false);
+
+      state.date = "08/15/24";
+      expect(state).toEqual({ date: "08/15/24" });
       expect(schema.safeParse(state).success).toBe(true);
 
       state.date = "08/31/24";
@@ -772,8 +788,8 @@ describe("fields", () => {
             type: "string",
             name: "Datetime",
             format: "date-time",
-            minimum: "2024-08-01",
-            maximum: "2024-08-31",
+            minimum: "2024-08-01T12:00:00Z",
+            maximum: "2024-08-31T12:00:00Z",
           },
         },
         required: ["datetime"],
@@ -792,7 +808,7 @@ describe("fields", () => {
 
       state.datetime = "2024-08-31T12:00:00Z";
       expect(state).toEqual({ datetime: "2024-08-31T12:00:00Z" });
-      expect(schema.safeParse(state).success).toBe(false);
+      expect(schema.safeParse(state).success).toBe(true);
 
       state.datetime = "2024-09-01T12:00:00Z";
       expect(state).toEqual({ datetime: "2024-09-01T12:00:00Z" });

@@ -12,6 +12,7 @@ import type {
   SchemaTuple,
   SchemaObject,
 } from "./types";
+import { parseDate } from "./date";
 export type * from "./types";
 
 function generateSchema(
@@ -172,92 +173,114 @@ function generateSchema(
     schema.type === "string" &&
     (schema.format === "date" || schema.format === "date-time")
   ) {
-    if (schema.format === "date-time") {
-      _schema = z.string().datetime(`${_name} must be a valid date-time.`);
-    }
-
-    _schema = (_schema ?? z.string()).pipe(
-      z.custom((value) => {
-        let dateSchema = z.coerce.date({
-          invalid_type_error: `${_name} must be a valid ${schema.format}.`,
-          required_error: `${_name} is required.`,
-        });
-
-        if (typeof schema.minimum === "string") {
-          dateSchema = dateSchema.min(new Date(schema.minimum), {
-            message: `${_name} must not be before ${schema.minimum}.`,
-          });
-        } else if (
-          Array.isArray(schema.minimum) &&
-          schema.minimum.length === 2
-        ) {
-          if (schema.minimum[0] === "(") {
-            dateSchema = dateSchema.pipe(
-              z.custom(
-                (value) =>
-                  new Date(value) >=
-                  new Date((schema.minimum as [string, string])[1]),
-                {
-                  message: `${_name} must be after ${schema.minimum[1]}.`,
-                }
-              )
-            ) as unknown as z.ZodDate;
-          } else if (schema.minimum[0] === "[") {
-            dateSchema = dateSchema.min(new Date(schema.minimum[1]), {
-              message: `${_name} must not be before ${schema.minimum}.`,
-            });
-          }
-        } else if (typeof schema.exclusiveMinimum === "string") {
-          dateSchema = dateSchema.pipe(
-            z.custom(
-              (value) =>
-                new Date(value) >= new Date(schema.exclusiveMinimum as string),
-              {
-                message: `${_name} must be after ${schema.exclusiveMinimum}.`,
-              }
-            )
-          ) as unknown as z.ZodDate;
-        }
-
-        if (typeof schema.maximum === "string") {
-          dateSchema = dateSchema.max(new Date(schema.maximum), {
-            message: `${_name} must not be after ${schema.maximum}.`,
-          });
-        } else if (
-          Array.isArray(schema.maximum) &&
-          schema.maximum.length === 2
-        ) {
-          if (schema.maximum[0] === ")") {
-            dateSchema = dateSchema.pipe(
-              z.custom(
-                (value) =>
-                  new Date(value) <=
-                  new Date((schema.maximum as [string, string])[1]),
-                {
-                  message: `${_name} must be before ${schema.maximum[1]}.`,
-                }
-              )
-            ) as unknown as z.ZodDate;
-          } else if (schema.maximum[0] === "]") {
-            dateSchema = dateSchema.max(new Date(schema.maximum[1]), {
-              message: `${_name} must not be after ${schema.maximum}.`,
-            });
-          }
-        } else if (typeof schema.exclusiveMaximum === "string") {
-          dateSchema = dateSchema.pipe(
-            z.custom(
-              (value) =>
-                new Date(value) <= new Date(schema.exclusiveMaximum as string),
-              {
-                message: `${_name} must be before ${schema.exclusiveMaximum}.`,
-              }
-            )
-          ) as unknown as z.ZodDate;
-        }
-
-        return dateSchema.safeParse(value).success;
+    _schema = z
+      .string()
+      .refine((value) => parseDate(value, schema.format) !== null, {
+        message: `${_name} must be a valid ${schema.format}.`,
       })
-    ) as unknown as z.ZodDate;
+      .pipe(
+        z.custom(
+          (value) => {
+            const parsedDate = parseDate(value, schema.format);
+
+            let dateSchema = z.date({
+              invalid_type_error: `${_name} must be a valid ${schema.format}.`,
+              required_error: `${_name} is required.`,
+            });
+
+            if (typeof schema.minimum === "string") {
+              const minimum = parseDate(schema.minimum, schema.format);
+
+              dateSchema = dateSchema.refine(
+                (value) => minimum && value >= minimum,
+                {
+                  message: `${_name} must not be before ${schema.minimum}.`,
+                }
+              ) as unknown as z.ZodDate;
+            } else if (
+              Array.isArray(schema.minimum) &&
+              schema.minimum.length === 2
+            ) {
+              if (schema.minimum[0] === "(") {
+                const minimum = parseDate(schema.minimum[1], schema.format);
+
+                dateSchema = dateSchema.refine(
+                  (value) => minimum && value > minimum,
+                  {
+                    message: `${_name} must be after ${schema.minimum[1]}.`,
+                  }
+                ) as unknown as z.ZodDate;
+              } else if (schema.minimum[0] === "[") {
+                const minimum = parseDate(schema.minimum[1], schema.format);
+
+                dateSchema = dateSchema.refine(
+                  (value) => minimum && value >= minimum,
+                  {
+                    message: `${_name} must not be before ${schema.minimum[1]}.`,
+                  }
+                ) as unknown as z.ZodDate;
+              }
+            } else if (typeof schema.exclusiveMinimum === "string") {
+              const minimum = parseDate(schema.exclusiveMinimum, schema.format);
+
+              dateSchema = dateSchema.refine(
+                (value) => minimum && value > minimum,
+                {
+                  message: `${_name} must be after ${schema.exclusiveMinimum}.`,
+                }
+              ) as unknown as z.ZodDate;
+            }
+
+            if (typeof schema.maximum === "string") {
+              const maximum = parseDate(schema.maximum, schema.format);
+
+              dateSchema = dateSchema.refine(
+                (value) => maximum && value <= maximum,
+                {
+                  message: `${_name} must not be after ${schema.maximum}.`,
+                }
+              ) as unknown as z.ZodDate;
+            } else if (
+              Array.isArray(schema.maximum) &&
+              schema.maximum.length === 2
+            ) {
+              if (schema.maximum[0] === ")") {
+                const maximum = parseDate(schema.maximum[1], schema.format);
+
+                dateSchema = dateSchema.refine(
+                  (value) => maximum && value < maximum,
+                  {
+                    message: `${_name} must be before ${schema.maximum[1]}.`,
+                  }
+                ) as unknown as z.ZodDate;
+              } else if (schema.maximum[0] === "]") {
+                const maximum = parseDate(schema.maximum[1], schema.format);
+
+                dateSchema = dateSchema.refine(
+                  (value) => maximum && value <= maximum,
+                  {
+                    message: `${_name} must not be after ${schema.maximum[1]}.`,
+                  }
+                ) as unknown as z.ZodDate;
+              }
+            } else if (typeof schema.exclusiveMaximum === "string") {
+              const maximum = parseDate(schema.exclusiveMaximum, schema.format);
+
+              dateSchema = dateSchema.refine(
+                (value) => maximum && value < maximum,
+                {
+                  message: `${_name} must be before ${schema.exclusiveMaximum}.`,
+                }
+              ) as unknown as z.ZodDate;
+            }
+
+            return dateSchema.safeParse(parsedDate).success;
+          },
+          {
+            message: `${_name} must be a valid ${schema.format}.`,
+          }
+        )
+      ) as unknown as z.ZodDate;
   } else if (schema.type === "string") {
     _schema = z.string({
       invalid_type_error: `${_name} must be a string.`,
