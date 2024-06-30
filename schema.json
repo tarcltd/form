@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/tarcltd/form/main/schema.json",
   "title": "TARC Ltd. Form Schema",
-  "description": "A JSON Schema definition of the TARC Ltd. Form version 1.0.12 interface.",
+  "description": "A JSON Schema definition of the TARC Ltd. Form version 1.0.13 interface.",
   "type": "object",
   "properties": {
     "$schema": {
@@ -53,7 +53,7 @@
     },
     "required": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": { "type": "string", "minLength": 1 },
       "description": "The required fields of the schema."
     },
     "metadata": {
@@ -84,10 +84,13 @@
         "type": { "type": "string", "enum": ["object"] },
         "properties": { "type": "object" },
         "patternProperties": { "type": "object" },
-        "required": { "type": "array", "items": { "type": "string" } },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "required": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" },
         "if": { "$ref": "#/definitions/schemaObject" },
@@ -100,12 +103,18 @@
       "type": "object",
       "properties": {
         "type": { "type": "string", "enum": ["string"] },
-        "enum": { "type": "array", "items": { "type": "string" } },
-        "exclusiveEnum": { "type": "array", "items": { "type": "string" } },
+        "enum": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "exclusiveEnum": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
         "minLength": { "type": "integer" },
         "maxLength": { "type": "integer" },
         "length": { "type": "integer" },
-        "pattern": { "type": "string" },
+        "pattern": { "type": "string", "minLength": 1 },
         "format": {
           "type": "string",
           "enum": [
@@ -119,23 +128,23 @@
             "base64"
           ]
         },
-        "startsWith": { "type": "string" },
-        "endsWith": { "type": "string" },
+        "startsWith": { "type": "string", "minLength": 1 },
+        "endsWith": { "type": "string", "minLength": 1 },
         "includes": {
           "oneOf": [
-            { "type": "string" },
-            { "type": "array", "items": { "type": "string" } }
+            { "type": "string", "minLength": 1 },
+            { "type": "array", "items": { "type": "string", "minLength": 1 } }
           ]
         },
         "excludes": {
           "oneOf": [
-            { "type": "string" },
-            { "type": "array", "items": { "type": "string" } }
+            { "type": "string", "minLength": 1 },
+            { "type": "array", "items": { "type": "string", "minLength": 1 } }
           ]
         },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" }
       },
@@ -145,12 +154,40 @@
       "type": "object",
       "properties": {
         "type": { "type": "string", "enum": ["string"] },
-        "minimum": { "type": "string", "format": "date" },
-        "maximum": { "type": "string", "format": "date" },
+        "minimum": {
+          "oneOf": [
+            { "type": "string", "format": "date" },
+            {
+              "type": "array",
+              "items": [
+                { "type": "string", "enum": ["(", "["] },
+                { "type": "string", "format": "date" }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "maximum": {
+          "oneOf": [
+            { "type": "string", "format": "date" },
+            {
+              "type": "array",
+              "items": [
+                { "type": "string", "enum": [")", "]"] },
+                { "type": "string", "format": "date" }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "exclusiveMinimum": { "type": "string", "format": "date" },
+        "exclusiveMaximum": { "type": "string", "format": "date" },
         "format": { "type": "string", "enum": ["date"] },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" }
       },
@@ -160,12 +197,40 @@
       "type": "object",
       "properties": {
         "type": { "type": "string", "enum": ["string"] },
-        "minimum": { "type": "string", "format": "date-time" },
-        "maximum": { "type": "string", "format": "date-time" },
+        "minimum": {
+          "oneOf": [
+            { "type": "string", "format": "date-time" },
+            {
+              "type": "array",
+              "items": [
+                { "type": "string", "enum": ["(", "["] },
+                { "type": "string", "format": "date-time" }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "maximum": {
+          "oneOf": [
+            { "type": "string", "format": "date-time" },
+            {
+              "type": "array",
+              "items": [
+                { "type": "string", "enum": [")", "]"] },
+                { "type": "string", "format": "date-time" }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "exclusiveMinimum": { "type": "string", "format": "date-time" },
+        "exclusiveMaximum": { "type": "string", "format": "date-time" },
         "format": { "type": "string", "enum": ["date-time"] },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" }
       },
@@ -206,9 +271,9 @@
         "exclusiveMinimum": { "type": "number" },
         "exclusiveMaximum": { "type": "number" },
         "multipleOf": { "type": "number" },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" }
       },
@@ -249,9 +314,9 @@
         "exclusiveMinimum": { "type": "number" },
         "exclusiveMaximum": { "type": "number" },
         "multipleOf": { "type": "number" },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" }
       },
@@ -261,9 +326,9 @@
       "type": "object",
       "properties": {
         "type": { "type": "string", "enum": ["boolean"] },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" }
       },
@@ -279,9 +344,9 @@
         "length": { "type": "integer" },
         "nonempty": { "type": "boolean" },
         "uniqueItems": { "type": "boolean" },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" }
       },
@@ -296,9 +361,9 @@
           "items": { "$ref": "#/definitions/schemaField" },
           "minItems": 1
         },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" }
       },
@@ -308,9 +373,9 @@
       "type": "object",
       "properties": {
         "type": { "type": "string", "enum": ["null"] },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "$comment": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" },
         "nullable": { "type": "boolean" }
       },
@@ -335,7 +400,7 @@
             "debug"
           ]
         },
-        "content": { "type": "string" },
+        "content": { "type": "string", "minLength": 1 },
         "attrs": { "type": "object" }
       },
       "required": ["type"]
