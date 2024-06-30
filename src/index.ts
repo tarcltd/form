@@ -125,9 +125,11 @@ function generateSchema(
         z.custom(
           (value) => {
             if (typeof schema.attrs === "object") {
+              /* biome-ignore lint/performance/noDelete: */
               delete schema.attrs.condition;
 
               if (Object.keys(schema.attrs).length === 0) {
+                /* biome-ignore lint/performance/noDelete: */
                 delete schema.attrs;
               }
             }
